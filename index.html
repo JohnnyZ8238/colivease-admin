@@ -144,9 +144,10 @@ td .sub { display: block; color: var(--muted); font-size: 12px; }
     <div><h1>管理后台</h1><p>用管理员邮箱登录。只有被授权的账号能进入，所有操作都会记录。</p></div>
     <details id="api-box"><summary class="hint" style="cursor:pointer">服务器设置</summary><label class="field" style="margin-top:8px">服务器地址<input class="input" id="api" placeholder="https://api.colivease.ca" required><span class="hint">ColivEase 后台服务的地址。本机测试用 http://localhost:8787</span></label></details>
     <label class="field">邮箱<input class="input" id="email" type="email" autocomplete="email" required></label>
-    <label class="field" id="code-field" hidden>验证码<input class="input" id="code" inputmode="numeric" autocomplete="one-time-code"><span class="hint" id="code-hint"></span></label>
+    <div class="notice" id="sent-note" hidden></div>
+    <label class="field" id="code-field" hidden>或输入邮件里的验证码<input class="input" id="code" inputmode="numeric" autocomplete="one-time-code"><span class="hint" id="code-hint"></span></label>
     <div class="error" id="signin-error"></div>
-    <button class="btn primary" id="signin-go" type="submit">发送验证码</button>
+    <button class="btn primary" id="signin-go" type="submit">发送登录链接</button>
   </form>
 </div>
 
@@ -184,8 +185,13 @@ td .sub { display: block; color: var(--muted); font-size: 12px; }
   };
 
   const LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
-  const DEFAULT_API = LOCAL ? "http://localhost:8787" : "https://api.colivease.ca";
-  let API = store.get("cv-admin-api") || DEFAULT_API;
+  // The ColivEase backend: the "api" Edge Function in ColivEase's own Supabase project (supabase/functions/api).
+  const DEFAULT_API = LOCAL ? "http://localhost:8787" : "https://hwamygorfxbdpzaowomd.supabase.co/functions/v1";
+  // The project's public anon key (safe in a web page; it only gets requests past Supabase's gateway — the function
+  // checks the ColivEase session in x-cv-token). Filled in by scripts/web/assemble-admin.mjs.
+  const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3YW15Z29yZnhiZHB6YW93b21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2OTY4NjEsImV4cCI6MjEwODI3Mjg2MX0.FW7PuZi3HY6nZhezMHE6VdWtPznYiZpWoQEZRZUWj-4";
+  const savedApi = store.get("cv-admin-api");
+  let API = savedApi && "https://api.colivease.ca" !== savedApi ? savedApi : DEFAULT_API;
   let TOKEN = store.get("cv-admin-token");
   let ME = null;
   let view = "overview";
@@ -194,9 +200,11 @@ td .sub { display: block; color: var(--muted); font-size: 12px; }
   async function api(method, path, body) {
     const r = await fetch(API.replace(/\/$/, "") + path, {
       method,
-      headers: { "content-type": "application/json", ...(TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}) },
+      headers: API.includes(".supabase.co")
+        ? { "content-type": "application/json", apikey: ANON_KEY, authorization: `Bearer ${ANON_KEY}`, ...(TOKEN ? { "x-cv-token": TOKEN } : {}) }
+        : { "content-type": "application/json", ...(TOKEN ? { authorization: `Bearer ${TOKEN}` } : {}) },
       body: body ? JSON.stringify(body) : undefined,
-    }).catch(() => { throw new Error(API === "https://api.colivease.ca" ? "后台服务器（api.colivease.ca）还没有上线，暂时连不上" : "连不上服务器，检查「服务器设置」里的地址，或服务器是否在运行"); });
+    }).catch(() => { throw new Error(API === DEFAULT_API && !LOCAL ? "暂时连不上 ColivEase 后台，请稍后再试" : "连不上服务器，检查「服务器设置」里的地址，或服务器是否在运行"); });
     const json = await r.json().catch(() => ({}));
     if (401 === r.status && TOKEN) { signOut(); throw new Error("登录已过期，请重新登录"); }
     if (!r.ok) throw new Error(json.error || `出错了（${r.status}）`);
@@ -272,28 +280,14 @@ td .sub { display: block; color: var(--muted); font-size: 12px; }
     $("#signin-go").disabled = true;
     try {
       if (!codeSent) {
-        const r = await api("POST", "/api/auth/start", { email });
+        const r = await api("POST", "/api/auth/start", { email, redirectTo: location.origin + location.pathname });
         codeSent = true;
+        $("#sent-note").hidden = false;
+        $("#sent-note").textContent = r.demo ? `本机测试模式：验证码 ${r.code}` : `登录邮件已发到 ${email}。点邮件里的「登录」链接就会回到这里并自动登录（链接 1 小时内有效）。`;
         $("#code-field").hidden = false;
-        $("#code-hint").textContent = r.demo ? `本机测试模式：验证码 ${r.code}` : "验证码已发送，10 分钟内有效";
-        $("#signin-go").textContent = "登录";
-        $("#code").focus();
+        $("#signin-go").textContent = "用验证码登录";
       } else {
-        const r = await api("POST", "/api/auth/verify", { email, code: $("#code").value.trim() });
-        TOKEN = r.token;
-        try {
-          ME = await api("GET", "/api/admin/me");
-        } catch (e2) {
-          await api("POST", "/api/auth/logout").catch(() => {});
-          TOKEN = null;
-          throw e2;
-        }
-        store.set("cv-admin-token", TOKEN);
-        codeSent = false;
-        $("#code-field").hidden = true;
-        $("#code").value = "";
-        $("#signin-go").textContent = "发送验证码";
-        start();
+        await finishSignIn(await api("POST", "/api/auth/verify", { email, code: $("#code").value.trim() }));
       }
     } catch (e2) {
       err.textContent = e2.message;
@@ -301,8 +295,44 @@ td .sub { display: block; color: var(--muted); font-size: 12px; }
       $("#signin-go").disabled = false;
     }
   };
+  async function finishSignIn(r) {
+    TOKEN = r.token;
+    try {
+      ME = await api("GET", "/api/admin/me");
+    } catch (e2) {
+      await api("POST", "/api/auth/logout").catch(() => {});
+      TOKEN = null;
+      ME = null;
+      throw e2;
+    }
+    store.set("cv-admin-token", TOKEN);
+    codeSent = false;
+    $("#sent-note").hidden = true;
+    $("#code-field").hidden = true;
+    $("#code").value = "";
+    $("#signin-go").textContent = "发送登录链接";
+    start();
+  }
+  // Back from the sign-in link in the email: Supabase puts the token in the address (#access_token=…).
+  async function fromEmailLink() {
+    const params = new URLSearchParams(location.hash.slice(1));
+    if (!params.get("access_token") && !params.get("error_description")) return false;
+    history.replaceState(null, "", location.pathname);
+    showSignin();
+    if (params.get("error_description")) {
+      $("#signin-error").textContent = `登录链接无效或已过期，请重新发送（${params.get("error_description")}）`;
+      return true;
+    }
+    try {
+      await finishSignIn(await api("POST", "/api/auth/exchange", { accessToken: params.get("access_token") }));
+    } catch (e) {
+      $("#signin-error").textContent = e.message;
+    }
+    return true;
+  }
+
   function signOut() {
-    if (TOKEN) fetch(API + "/api/auth/logout", { method: "POST", headers: { authorization: `Bearer ${TOKEN}` } }).catch(() => {});
+    if (TOKEN) api("POST", "/api/auth/logout").catch(() => {});
     TOKEN = null;
     ME = null;
     store.set("cv-admin-token", null);
@@ -644,8 +674,11 @@ td .sub { display: block; color: var(--muted); font-size: 12px; }
       <div class="card tablewrap">${entries.length ? `<table><thead><tr><th>时间</th><th>管理员</th><th>操作</th><th>对象</th><th>原因</th><th>详情</th></tr></thead><tbody>${entries.map((e) => `<tr><td>${fmt(e.at)}</td><td>${esc(e.admin || e.admin_id)}</td><td>${esc(ACTION[e.action] || e.action)}</td><td style="word-break:break-all">${esc(e.target || "—")}</td><td>${esc(e.reason || "—")}</td><td style="max-width:280px;word-break:break-all"><span class="sub">${esc(e.detail ? JSON.stringify(e.detail) : "")}</span></td></tr>`).join("")}</tbody></table>` : `<div class="empty">还没有记录</div>`}</div>`;
   };
 
-  if (TOKEN && API) start();
-  else showSignin();
+  fromEmailLink().then((handled) => {
+    if (handled) return;
+    if (TOKEN && API) start();
+    else showSignin();
+  });
 })();
 </script>
 </body>
