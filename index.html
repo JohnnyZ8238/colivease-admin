@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>ColivEase Admin</title>
+<link rel="icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap">
@@ -33,6 +34,8 @@ h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.2p
 .brand { display: flex; align-items: center; gap: 10px; font: 700 20px var(--display); color: var(--ink); }
 .mark { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, var(--blue-2), var(--blue-deep)); color: #fff; font: 700 21px var(--display); box-shadow: 0 8px 18px -8px rgba(40,101,255,.8); }
 .brand small { font: 600 11px var(--body); color: var(--blue); background: var(--blue-soft); padding: 2px 8px; border-radius: 999px; }
+.brand img { height: 46px; width: auto; display: block; }
+.side .brand img { height: 52px; }
 
 /* sign-in */
 .signin { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
@@ -159,7 +162,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
 .vars { display: flex; flex-wrap: wrap; gap: 6px; }
 .var { height: 26px; padding: 0 10px; border-radius: 999px; border: 1px dashed #A7C1FF; background: var(--blue-soft); color: var(--blue); font: 600 12px var(--body); }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.preview { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg); }
+.preview { width: 100%; height: 560px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg); }
 .pushcard { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 18px; background: var(--white); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .pushcard .mark { width: 34px; height: 34px; font-size: 18px; border-radius: 10px; }
 @media (max-width: 700px) { .pair { grid-template-columns: 1fr; } }
@@ -182,7 +185,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
 
 <div class="signin" id="signin" hidden>
   <form class="card" id="signin-form">
-    <div class="brand"><span class="mark">E</span>ColivEase <small>Admin</small></div>
+    <div class="brand"><img src="logo.png" alt="ColivEase"><small>Admin</small></div>
     <div><h1>Sign in</h1><p>Admins only. Every action is recorded.</p></div>
     <label class="field">Email<input class="input" id="email" type="email" autocomplete="username" required></label>
     <label class="field" id="pw-field">Password<input class="input" id="password" type="password" autocomplete="current-password"></label>
@@ -197,7 +200,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
 
 <div class="shell" id="shell" hidden>
   <aside class="side">
-    <div class="brand"><span class="mark">E</span>ColivEase <small>Admin</small></div>
+    <div class="brand"><img src="logo.png" alt="ColivEase"><small>Admin</small></div>
     <nav class="nav" id="nav"></nav>
     <div class="who"><span class="hint">Signed in as</span><b id="who-email"></b><span id="who-role" class="tag blue" style="justify-self:start"></span><div class="row"><button class="btn small" id="setpw">Password</button><button class="btn small" id="signout">Sign out</button></div></div>
   </aside>
@@ -797,7 +800,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       <section><h4>IN-APP</h4>${field("inapp.title")}${field("inapp.body", true)}</section>
       <section><h4>PUSH</h4>${field("push.title")}${field("push.body", true)}</section>
       <section><h4>EMAIL</h4>${field("email.subject")}${field("email.body", true)}<p class="hint">A blank line starts a new paragraph. The email adds the ColivEase header, an “Open ColivEase” button and the footer.</p></section>
-      <section><div class="row" style="justify-content:space-between"><h4>PREVIEW</h4><div class="tabs" id="pv-lang"><button data-pl="en" class="on">English</button><button data-pl="zh">Chinese</button></div></div><div class="pushcard"><span class="mark">E</span><div><b id="pv-push-title"></b><div class="hint" id="pv-push-body"></div></div></div><iframe class="preview" id="pv-email" title="Email preview"></iframe></section>
+      <section><div class="row" style="justify-content:space-between"><h4>PREVIEW</h4><div class="tabs" id="pv-lang"><button data-pl="en" class="on">English</button><button data-pl="zh">Chinese</button></div></div><div class="pushcard"><img src="icon-192.png" alt="" style="width:36px;height:36px;border-radius:10px"><div><b id="pv-push-title"></b><div class="hint" id="pv-push-body"></div></div></div><iframe class="preview" id="pv-email" title="Email preview"></iframe></section>
       <section><div class="row"><button class="btn primary" id="tpl-save">Save</button><button class="btn" id="tpl-test">Send a test to me</button>${t.edited ? `<button class="btn ghost" id="tpl-reset">Reset to default</button>` : ""}</div><div id="tpl-test-result" class="hint"></div></section>`);
     const sample = { name: "Alex", title: "Sunny 2-bed near Finch Station", reason: "Please add real photos of the bedroom", from: "Linda Li", preview: "Hi! Is the room still available for December?", team: "Downtown trio", status: "Resolved", note: "We suspended the other account.", plan: "ColivEase Plus", state: "active", body: "This is a test announcement." };
     const fill = (s) => String(s || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => sample[k] ?? "");
@@ -807,13 +810,22 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       el.querySelectorAll("[data-f]").forEach((i) => { const [g, k] = i.dataset.f.split("."); out[g][k][i.dataset.l] = i.value; });
       return out;
     };
-    const emailHtml = (subject, body) => `<div style="font-family:Poppins,Arial,sans-serif;background:#F5F7FB;padding:18px"><div style="max-width:520px;margin:auto;background:#fff;border-radius:20px;border:1px solid #E2E8F0;padding:26px"><div style="font:700 20px Fredoka,Poppins,Arial;color:#0B2255"><span style="display:inline-block;width:30px;height:30px;line-height:30px;text-align:center;border-radius:9px;background:#2865FF;color:#fff;margin-right:8px">E</span>ColivEase</div><h2 style="font:700 20px Fredoka,Poppins,Arial;color:#0B2255;margin:18px 0 12px">${esc(subject)}</h2>${esc(body).split(/\n{2,}/).map((p) => `<p style="font-size:14px;line-height:1.6;color:#33415C;margin:0 0 12px">${p.replace(/\n/g, "<br>")}</p>`).join("")}<a style="display:inline-block;background:#2865FF;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:999px;font-size:14px">${lang === "zh" ? "打开 ColivEase" : "Open ColivEase"}</a></div></div>`;
+    const emailHtmlLocal = (subject, body) => `<div style="font-family:Poppins,Arial,sans-serif;background:#F5F7FB;padding:18px"><div style="max-width:520px;margin:auto;background:#fff;border-radius:20px;border:1px solid #E2E8F0;padding:26px"><div style="font:700 20px Fredoka,Poppins,Arial;color:#0B2255"><span style="display:inline-block;width:30px;height:30px;line-height:30px;text-align:center;border-radius:9px;background:#2865FF;color:#fff;margin-right:8px">E</span>ColivEase</div><h2 style="font:700 20px Fredoka,Poppins,Arial;color:#0B2255;margin:18px 0 12px">${esc(subject)}</h2>${esc(body).split(/\n{2,}/).map((p) => `<p style="font-size:14px;line-height:1.6;color:#33415C;margin:0 0 12px">${p.replace(/\n/g, "<br>")}</p>`).join("")}<a style="display:inline-block;background:#2865FF;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:999px;font-size:14px">${lang === "zh" ? "打开 ColivEase" : "Open ColivEase"}</a></div></div>`;
     const preview = () => {
       const v = read();
       $("#pv-push-title", el).textContent = fill(v.push.title[lang]);
       $("#pv-push-body", el).textContent = fill(v.push.body[lang]);
-      $("#pv-email", el).srcdoc = emailHtml(fill(v.email.subject[lang]), fill(v.email.body[lang]));
+      clearTimeout(renderTimer);
+      renderTimer = setTimeout(async () => {
+        try {
+          const { html } = await api("POST", "/api/admin/notify/render", { subject: fill(v.email.subject[lang]), body: fill(v.email.body[lang]), lang });
+          $("#pv-email", el).srcdoc = html;
+        } catch {
+          $("#pv-email", el).srcdoc = emailHtmlLocal(fill(v.email.subject[lang]), fill(v.email.body[lang]));
+        }
+      }, 250);
     };
+    let renderTimer;
     let lastField = null;
     el.querySelectorAll("[data-f]").forEach((i) => { i.addEventListener("input", preview); i.addEventListener("focus", () => (lastField = i)); });
     el.querySelectorAll("[data-var]").forEach((b) => (b.onclick = () => {
