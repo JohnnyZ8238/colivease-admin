@@ -141,6 +141,26 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
 .msg .del { position: absolute; top: 6px; right: 6px; }
 .toast { position: fixed; bottom: 22px; left: 50%; translate: -50% 0; background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 999px; z-index: 40; font-weight: 500; box-shadow: var(--shadow); }
 .matrix td, .matrix th { text-align: center; }
+.tabs { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--soft); gap: 2px; }
+.tabs button { border: 0; background: transparent; height: 32px; padding: 0 14px; border-radius: 999px; font-weight: 600; font-size: 13px; color: var(--muted); }
+.tabs button.on { background: var(--white); color: var(--ink); box-shadow: 0 2px 8px rgba(11,34,85,.12); }
+.channels { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.channel { padding: 18px; display: grid; gap: 8px; align-content: start; }
+.channel h3 { margin: 0; font-size: 17px; display: flex; align-items: center; gap: 8px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); display: inline-block; }
+.dot.on { background: #22C55E; box-shadow: 0 0 0 4px rgba(34,197,94,.15); }
+.dot.off { background: #F59E0B; box-shadow: 0 0 0 4px rgba(245,158,11,.15); }
+.cat { margin: 18px 0 8px; font: 700 15px var(--display); color: var(--ink); }
+.tpl { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.tpl:last-child { border-bottom: 0; }
+.tpl:hover { background: rgba(231,239,254,.45); }
+.vars { display: flex; flex-wrap: wrap; gap: 6px; }
+.var { height: 26px; padding: 0 10px; border-radius: 999px; border: 1px dashed #A7C1FF; background: var(--blue-soft); color: var(--blue); font: 600 12px var(--body); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.preview { width: 100%; height: 420px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg); }
+.pushcard { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 18px; background: var(--white); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.pushcard .mark { width: 34px; height: 34px; font-size: 18px; border-radius: 10px; }
+@media (max-width: 700px) { .pair { grid-template-columns: 1fr; } }
 .matrix td:first-child, .matrix th:first-child { text-align: left; }
 
 @media (max-width: 900px) {
@@ -205,6 +225,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     "account.signout": "Signed out everywhere", "account.suspend": "Suspended account", "account.unsuspend": "Lifted suspension", "account.update": "Edited account", "account.plans": "Changed membership / mode", "account.delete": "Deleted account",
     "listing.update": "Changed home status", "listing.approve": "Approved home", "listing.reject": "Rejected home", "listing.delete": "Deleted home", "chat.read": "Read a chat", "chat.message.delete": "Deleted a message", "report.update": "Handled report",
     "broadcast": "Sent a broadcast", "settings.update": "Changed site settings", "admin.set": "Set admin role", "admin.remove": "Removed admin",
+    "notify.template": "Edited a notification", "notify.template.reset": "Reset a notification",
   };
   const ICON = {
     overview: '<path d="M3 13h8V3H3zM13 21h8v-8h-8zM3 21h8v-6H3zM13 3v8h8V3z"/>',
@@ -217,6 +238,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     broadcast: '<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/>',
     admins: '<path d="M12 3l8 3v6c0 4.5-3.4 7.7-8 9-4.6-1.3-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
     audit: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    notifications: '<path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/>',
   };
 
   const LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
@@ -412,6 +434,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     ["reports", "Reports", "reports.read"],
     ["members", "Memberships", "users.read"],
     ["settings", "Site settings", null],
+    ["notifications", "Notifications", "settings.write"],
     ["broadcast", "Broadcast", "broadcast"],
     ["admins", "Admins & roles", null],
     ["audit", "Audit log", "audit.read"],
@@ -694,6 +717,8 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       <form class="card panel" id="bc" style="display:grid;gap:12px;max-width:640px">
         <label class="field">Title<input class="input" name="title" required maxlength="120"></label>
         <label class="field">Message<textarea class="input" name="body" rows="4" maxlength="600"></textarea></label>
+        <div class="row"><span class="hint">Send as</span><label class="toggle"><input type="checkbox" name="inapp" checked>In-app</label><label class="toggle"><input type="checkbox" name="push" checked>Push</label><label class="toggle"><input type="checkbox" name="email">Email</label></div>
+        <p class="hint">Uses the “Announcement” template under Notifications.</p>
         <div><button class="btn primary">Send to everyone</button></div>
       </form>`;
     $("#bc").onsubmit = async (e) => {
@@ -701,9 +726,117 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       const f = Object.fromEntries(new FormData(e.target));
       const ok = await dialog({ title: "Send to every user?", body: `<p><b>${esc(f.title)}</b></p><p class="hint">${esc(f.body)}</p>`, confirm: "Send" });
       if (!ok) return;
-      try { const r = await api("POST", "/api/admin/broadcast", f); toast(`Sent to ${plural(r.sent, "account")}`); e.target.reset(); } catch (er) { toast(er.message); }
+      try { const r = await api("POST", "/api/admin/broadcast", { title: f.title, body: f.body, channels: ["inapp", "push", "email"].filter((c) => f[c]) }); toast(`Sent to ${plural(r.sent, "account")}`); e.target.reset(); } catch (er) { toast(er.message); }
     };
   };
+
+  // Notifications: what's set up, every template (edited here), and what was sent.
+  const KIND_LABEL = {
+    welcome: "Welcome", "listing.submitted": "Home submitted for review", "listing.approved": "Home approved", "listing.rejected": "Home not approved", "listing.hidden": "Home taken down",
+    "chat.message": "New chat message", "viewing.invite": "Viewing invite", "application.received": "New application (to landlord)", "application.update": "Application update (to renter)",
+    "team.invite": "Team invite", "match.new": "New match", "report.update": "Report outcome", "membership.changed": "Membership changed", "account.suspended": "Account suspended", "account.restored": "Account restored", announcement: "Announcement / broadcast",
+  };
+  const CH_LABEL = { inapp: "In-app", push: "Push", email: "Email" };
+  let notifyTab = "templates";
+  const urlB64 = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
+  async function enableBrowserPush() {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) return toast("This browser can't receive push notifications.");
+    try {
+      const reg = await navigator.serviceWorker.register("sw.js");
+      const perm = await Notification.requestPermission();
+      if ("granted" !== perm) return toast("Notifications are blocked for this site in the browser settings.");
+      const { publicKey } = await api("GET", "/api/push/vapid");
+      const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(publicKey) }));
+      await api("POST", "/api/push/register", { kind: "web", subscription: sub.toJSON(), platform: "admin-browser" });
+      toast("Push is on for this browser");
+      VIEWS.notifications();
+    } catch (e) {
+      toast(e.message || "Couldn't turn on push");
+    }
+  }
+  VIEWS.notifications = async () => {
+    loading();
+    const [{ templates, categories }, st] = await Promise.all([api("GET", "/api/admin/notify/templates"), api("GET", "/api/admin/notify/status")]);
+    const status = (on, okText, offText) => `<span class="row" style="gap:8px"><span class="dot ${on ? "on" : "off"}"></span>${on ? okText : offText}</span>`;
+    const thisBrowser = "Notification" in window && "granted" === Notification.permission;
+    $("#main").innerHTML = `${page("Notifications", "Everything ColivEase sends: in-app, push to phones and browsers, and email. Edit any template; changes apply to the next notification sent.")}
+      <div class="channels">
+        <div class="card channel"><h3>In-app</h3>${status(true, "Always on", "")}<span class="hint">Shown in each person's Notifications list.</span></div>
+        <div class="card channel"><h3>Browser push</h3>${status(st.web.ready, `Ready · ${plural(st.web.devices, "browser")}`, "Not set up")}<span class="hint">ColivEase's own Web Push keys.</span><div><button class="btn small" id="push-me">${thisBrowser ? "Re-register this browser" : "Turn on push in this browser"}</button></div></div>
+        <div class="card channel"><h3>Phone push</h3>${status(st.expo.devices > 0, plural(st.expo.devices, "phone"), "No phones yet")}<span class="hint">Through Expo, once the ColivEase app is installed from a store build.</span></div>
+        <div class="card channel"><h3>Email</h3>${status(st.email.ready, `Sending as ${esc(st.email.from || "")}`, "Not set up yet")}<span class="hint">${st.email.ready ? `Amazon SES · ${esc(st.email.region || "")}` : "Amazon SES: add the SES_* and MAIL_FROM secrets to the api function."}</span></div>
+      </div>
+      <div class="row" style="justify-content:space-between;margin-bottom:12px"><div class="tabs"><button data-tab="templates" class="${notifyTab === "templates" ? "on" : ""}">Templates</button><button data-tab="log" class="${notifyTab === "log" ? "on" : ""}">Delivery log</button></div></div>
+      <div id="notify-body"></div>`;
+    $("#push-me").onclick = enableBrowserPush;
+    $("#main").querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => { notifyTab = b.dataset.tab; VIEWS.notifications(); }));
+    if ("log" === notifyTab) {
+      const { entries } = await api("GET", "/api/admin/notify/log?limit=300");
+      const tone = { sent: "green", skipped: "", failed: "red" };
+      $("#notify-body").innerHTML = `<div class="card tablewrap">${entries.length ? `<table><thead><tr><th>When</th><th>To</th><th>Notification</th><th>Channel</th><th>Result</th><th>Details</th></tr></thead><tbody>${entries.map((e) => `<tr><td>${fmt(e.at)}</td><td>${esc(e.email || e.account_id || "—")}</td><td>${esc(KIND_LABEL[e.kind] || e.kind)}</td><td>${CH_LABEL[e.channel] || e.channel}</td><td><span class="tag ${tone[e.status] || ""}">${e.status}</span></td><td><span class="sub">${esc(e.detail || "")}</span></td></tr>`).join("")}</tbody></table>` : `<div class="empty">Nothing sent yet.</div>`}</div>`;
+      return;
+    }
+    const byCat = {};
+    for (const t of Object.values(templates)) (byCat[t.category] = byCat[t.category] || []).push(t);
+    $("#notify-body").innerHTML = Object.entries(byCat).map(([cat, list]) => `<div class="cat">${esc(categories[cat]?.en || cat)}</div><div class="card">${list.map((t) => `<div class="tpl" data-kind="${esc(t.kind)}"><div><b>${esc(KIND_LABEL[t.kind] || t.kind)}</b>${t.edited ? ` <span class="tag blue">Edited</span>` : ""}${t.critical ? ` <span class="tag amber">Always sent</span>` : ""}<span class="sub">${esc(t.push.title.en)} — ${esc(t.push.body.en)}</span></div><div class="tags">${["inapp", "push", "email"].map((c) => `<span class="tag ${t.channels[c] ? "green" : ""}">${CH_LABEL[c]}${t.channels[c] ? "" : " off"}</span>`).join("")}</div></div>`).join("")}</div>`).join("");
+    $("#notify-body").querySelectorAll("[data-kind]").forEach((row) => (row.onclick = () => editTemplate(templates[row.dataset.kind])));
+  };
+  function editTemplate(t) {
+    let lang = "en";
+    const field = (path, multiline) => {
+      const [grp, key] = path.split(".");
+      return `<div class="pair">${["en", "zh"].map((l) => `<label class="field">${l === "en" ? "English" : "Chinese"}${multiline ? `<textarea class="input" rows="${"email.body" === path ? 7 : 3}" data-f="${path}" data-l="${l}">${esc(t[grp][key][l] || "")}</textarea>` : `<input class="input" data-f="${path}" data-l="${l}" value="${esc(t[grp][key][l] || "")}">`}</label>`).join("")}</div>`;
+    };
+    const el = drawer(`
+      <div><h3>${esc(KIND_LABEL[t.kind] || t.kind)}</h3><p class="hint">${t.critical ? "Always sent, even if the person turned this category off." : "People can turn this category off in their notification settings."}</p></div>
+      <section><h4>CHANNELS</h4><div class="row">${["inapp", "push", "email"].map((c) => `<label class="toggle"><input type="checkbox" data-ch="${c}" ${t.channels[c] ? "checked" : ""}>${CH_LABEL[c]}</label>`).join("")}</div></section>
+      <section><h4>VARIABLES</h4><p class="hint">Click one to add it where your cursor is.</p><div class="vars">${t.vars.length ? t.vars.map((v) => `<button type="button" class="var" data-var="${v}">{{${v}}}</button>`).join("") : `<span class="hint">None for this notification.</span>`}</div></section>
+      <section><h4>IN-APP</h4>${field("inapp.title")}${field("inapp.body", true)}</section>
+      <section><h4>PUSH</h4>${field("push.title")}${field("push.body", true)}</section>
+      <section><h4>EMAIL</h4>${field("email.subject")}${field("email.body", true)}<p class="hint">A blank line starts a new paragraph. The email adds the ColivEase header, an “Open ColivEase” button and the footer.</p></section>
+      <section><div class="row" style="justify-content:space-between"><h4>PREVIEW</h4><div class="tabs" id="pv-lang"><button data-pl="en" class="on">English</button><button data-pl="zh">Chinese</button></div></div><div class="pushcard"><span class="mark">E</span><div><b id="pv-push-title"></b><div class="hint" id="pv-push-body"></div></div></div><iframe class="preview" id="pv-email" title="Email preview"></iframe></section>
+      <section><div class="row"><button class="btn primary" id="tpl-save">Save</button><button class="btn" id="tpl-test">Send a test to me</button>${t.edited ? `<button class="btn ghost" id="tpl-reset">Reset to default</button>` : ""}</div><div id="tpl-test-result" class="hint"></div></section>`);
+    const sample = { name: "Alex", title: "Sunny 2-bed near Finch Station", reason: "Please add real photos of the bedroom", from: "Linda Li", preview: "Hi! Is the room still available for December?", team: "Downtown trio", status: "Resolved", note: "We suspended the other account.", plan: "ColivEase Plus", state: "active", body: "This is a test announcement." };
+    const fill = (s) => String(s || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k) => sample[k] ?? "");
+    const read = () => {
+      const out = { channels: {}, inapp: { title: {}, body: {} }, push: { title: {}, body: {} }, email: { subject: {}, body: {} } };
+      el.querySelectorAll("[data-ch]").forEach((c) => (out.channels[c.dataset.ch] = c.checked));
+      el.querySelectorAll("[data-f]").forEach((i) => { const [g, k] = i.dataset.f.split("."); out[g][k][i.dataset.l] = i.value; });
+      return out;
+    };
+    const emailHtml = (subject, body) => `<div style="font-family:Poppins,Arial,sans-serif;background:#F5F7FB;padding:18px"><div style="max-width:520px;margin:auto;background:#fff;border-radius:20px;border:1px solid #E2E8F0;padding:26px"><div style="font:700 20px Fredoka,Poppins,Arial;color:#0B2255"><span style="display:inline-block;width:30px;height:30px;line-height:30px;text-align:center;border-radius:9px;background:#2865FF;color:#fff;margin-right:8px">E</span>ColivEase</div><h2 style="font:700 20px Fredoka,Poppins,Arial;color:#0B2255;margin:18px 0 12px">${esc(subject)}</h2>${esc(body).split(/\n{2,}/).map((p) => `<p style="font-size:14px;line-height:1.6;color:#33415C;margin:0 0 12px">${p.replace(/\n/g, "<br>")}</p>`).join("")}<a style="display:inline-block;background:#2865FF;color:#fff;text-decoration:none;font-weight:600;padding:11px 20px;border-radius:999px;font-size:14px">${lang === "zh" ? "打开 ColivEase" : "Open ColivEase"}</a></div></div>`;
+    const preview = () => {
+      const v = read();
+      $("#pv-push-title", el).textContent = fill(v.push.title[lang]);
+      $("#pv-push-body", el).textContent = fill(v.push.body[lang]);
+      $("#pv-email", el).srcdoc = emailHtml(fill(v.email.subject[lang]), fill(v.email.body[lang]));
+    };
+    let lastField = null;
+    el.querySelectorAll("[data-f]").forEach((i) => { i.addEventListener("input", preview); i.addEventListener("focus", () => (lastField = i)); });
+    el.querySelectorAll("[data-var]").forEach((b) => (b.onclick = () => {
+      const i = lastField || el.querySelector('[data-f="push.body"][data-l="en"]');
+      const at = i.selectionStart ?? i.value.length;
+      i.value = `${i.value.slice(0, at)}{{${b.dataset.var}}}${i.value.slice(i.selectionEnd ?? at)}`;
+      i.focus();
+      preview();
+    }));
+    el.querySelectorAll("[data-pl]").forEach((b) => (b.onclick = () => { lang = b.dataset.pl; el.querySelectorAll("[data-pl]").forEach((x) => x.classList.toggle("on", x === b)); preview(); }));
+    preview();
+    $("#tpl-save", el).onclick = async () => {
+      try { await api("PUT", `/api/admin/notify/templates/${encodeURIComponent(t.kind)}`, read()); toast("Saved. The next notification uses it."); closeDrawer(); VIEWS.notifications(); } catch (e) { toast(e.message); }
+    };
+    $("#tpl-reset", el) && ($("#tpl-reset", el).onclick = async () => {
+      if (!(await dialog({ title: "Go back to the default text?", body: `<p class="hint">Your edits to this notification are removed.</p>`, confirm: "Reset", danger: true }))) return;
+      try { await api("DELETE", `/api/admin/notify/templates/${encodeURIComponent(t.kind)}`); toast("Back to the default"); closeDrawer(); VIEWS.notifications(); } catch (e) { toast(e.message); }
+    });
+    $("#tpl-test", el).onclick = async () => {
+      $("#tpl-test-result", el).textContent = "Sending…";
+      try {
+        const { results } = await api("POST", "/api/admin/notify/test", { kind: t.kind });
+        $("#tpl-test-result", el).innerHTML = results.length ? results.map((r) => `<span class="tag ${r.status === "sent" ? "green" : r.status === "failed" ? "red" : ""}">${CH_LABEL[r.channel]}: ${r.status}</span> <span class="hint">${esc(r.detail || "")}</span>`).join("<br>") : "Nothing was sent (all channels are off).";
+      } catch (e) { $("#tpl-test-result", el).textContent = e.message; }
+    };
+  }
 
   // Admins
   const PERMS = [["users.read", "See users"], ["users.suspend", "Suspend users"], ["users.write", "Edit users"], ["users.delete", "Delete users"], ["listings.read", "See homes"], ["listings.write", "Review homes"], ["chats.read", "Read chats"], ["chats.write", "Delete messages"], ["reports.write", "Handle reports"], ["plans.write", "Manage memberships"], ["settings.write", "Site settings"], ["broadcast", "Broadcast"], ["admins.write", "Manage admins"], ["audit.read", "Audit log"]];
