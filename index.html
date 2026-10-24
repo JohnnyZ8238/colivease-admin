@@ -154,6 +154,8 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
 .tpl { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); cursor: pointer; }
 .tpl:last-child { border-bottom: 0; }
 .tpl:hover { background: rgba(231,239,254,.45); }
+.tpl .sub { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tpl > div:first-child { min-width: 0; }
 .vars { display: flex; flex-wrap: wrap; gap: 6px; }
 .var { height: 26px; padding: 0 10px; border-radius: 999px; border: 1px dashed #A7C1FF; background: var(--blue-soft); color: var(--blue); font: 600 12px var(--body); }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -785,7 +787,8 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     let lang = "en";
     const field = (path, multiline) => {
       const [grp, key] = path.split(".");
-      return `<div class="pair">${["en", "zh"].map((l) => `<label class="field">${l === "en" ? "English" : "Chinese"}${multiline ? `<textarea class="input" rows="${"email.body" === path ? 7 : 3}" data-f="${path}" data-l="${l}">${esc(t[grp][key][l] || "")}</textarea>` : `<input class="input" data-f="${path}" data-l="${l}" value="${esc(t[grp][key][l] || "")}">`}</label>`).join("")}</div>`;
+      const what = { title: "Title", subject: "Subject", body: "Message" }[key];
+      return `<div class="pair">${["en", "zh"].map((l) => `<label class="field">${what} · ${l === "en" ? "English" : "Chinese"}${multiline ? `<textarea class="input" rows="${"email.body" === path ? 7 : 3}" data-f="${path}" data-l="${l}">${esc(t[grp][key][l] || "")}</textarea>` : `<input class="input" data-f="${path}" data-l="${l}" value="${esc(t[grp][key][l] || "")}">`}</label>`).join("")}</div>`;
     };
     const el = drawer(`
       <div><h3>${esc(KIND_LABEL[t.kind] || t.kind)}</h3><p class="hint">${t.critical ? "Always sent, even if the person turned this category off." : "People can turn this category off in their notification settings."}</p></div>
