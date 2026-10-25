@@ -702,12 +702,28 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
           <label class="toggle"><input type="checkbox" name="safetyMembersOnly" ${s.safetyMembersOnly !== false ? "checked" : ""} ${edit ? "" : "disabled"}>Neighbourhood safety data for members only</label>
           ${edit ? `<div><button class="btn primary">Save switches</button></div>` : ""}
         </form>
+        <form class="card panel" id="avatars" style="display:grid;gap:12px"><h3>Comic avatars (Gemini)</h3>
+          <span class="row" style="gap:8px"><span class="dot ${s.avatarStatus?.ready ? "on" : "off"}"></span>${s.avatarStatus?.ready ? `Connected · ${esc(s.avatarStatus.model)}` : "Not connected: add the GEMINI_API_KEY secret to the api function"}</span>
+          <span class="hint">Today: ${s.avatarStatus?.site ?? 0} made by ${plural(s.avatarStatus?.people ?? 0, "person", "people")}. Every avatar is a paid Gemini call; these limits cap the cost.</span>
+          <label class="toggle"><input type="checkbox" name="avatarEnabled" ${s.avatarEnabled !== false ? "checked" : ""} ${edit ? "" : "disabled"}>Turn photos into comic avatars</label>
+          <div class="pair">
+            <label class="field">Per signed-in person, per day<input class="input" type="number" min="0" max="50" name="avatarPerDay" value="${esc(s.avatarPerDay ?? 3)}" ${edit ? "" : "disabled"}></label>
+            <label class="field">Per visitor (not signed in), per day<input class="input" type="number" min="0" max="50" name="avatarGuestPerDay" value="${esc(s.avatarGuestPerDay ?? 2)}" ${edit ? "" : "disabled"}></label>
+          </div>
+          <label class="field">Whole site, per day<input class="input" type="number" min="0" max="10000" name="avatarSiteDailyLimit" value="${esc(s.avatarSiteDailyLimit ?? 300)}" ${edit ? "" : "disabled"}></label>
+          ${edit ? `<div><button class="btn primary">Save avatar limits</button></div>` : ""}
+        </form>
       </div>`;
     if (!edit) return;
     $("#ann").onsubmit = async (e) => {
       e.preventDefault();
       const f = new FormData(e.target);
       try { await api("PUT", "/api/admin/settings", { announcement: { active: f.get("active") === "on", tone: f.get("tone"), zh: f.get("zh").trim(), en: f.get("en").trim() } }); toast("Banner saved"); } catch (er) { toast(er.message); }
+    };
+    $("#avatars").onsubmit = async (e) => {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      try { await api("PUT", "/api/admin/settings", { avatarEnabled: f.get("avatarEnabled") === "on", avatarPerDay: Number(f.get("avatarPerDay")), avatarGuestPerDay: Number(f.get("avatarGuestPerDay")), avatarSiteDailyLimit: Number(f.get("avatarSiteDailyLimit")) }); toast("Avatar limits saved"); } catch (er) { toast(er.message); }
     };
     $("#switches").onsubmit = async (e) => {
       e.preventDefault();
