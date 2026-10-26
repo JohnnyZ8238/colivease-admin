@@ -167,6 +167,17 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
 .pushcard .mark { width: 34px; height: 34px; font-size: 18px; border-radius: 10px; }
 @media (max-width: 700px) { .pair { grid-template-columns: 1fr; } }
 .matrix td:first-child, .matrix th:first-child { text-align: left; }
+/* staff permissions, grants */
+.perms { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px 20px; }
+.perms fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; align-content: start; }
+.perms legend { font: 600 12px var(--body); color: var(--muted); letter-spacing: .3px; padding: 0; margin-bottom: 4px; }
+.perms .toggle { font-size: 13px; }
+.staff { padding: 20px; display: grid; gap: 14px; margin-bottom: 14px; }
+.staff-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.input.sm { height: 34px; padding: 0 10px; width: auto; border-radius: 12px; }
+.input.num { width: 84px; }
+.grant { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; }
+.grant b { font-size: 13px; }
 
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }
@@ -224,12 +235,40 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   };
   const plural = (n, one, many = `${one}s`) => `${n} ${1 === n ? one : many}`;
   const LANG = { zh: "Chinese", en: "English", ko: "Korean", es: "Spanish", fr: "French", hi: "Hindi/Punjabi", vi: "Vietnamese", tl: "Tagalog", fa: "Farsi", pt: "Portuguese" };
-  const KIND = { roommate: "Roommate", group: "Group", host: "Landlord / sublet", landlord: "Landlord", realtor: "Agent" };
-  const ROLE = { owner: "Owner", admin: "Admin", moderator: "Moderator", support: "Support (read-only)" };
+  const KIND = { roommate: "Roommate", group: "Group", host: "Landlord / sublet", landlord: "Landlord", realtor: "Agent", direct: "Direct", listing: "Home inquiry", team: "Team" };
+  const ROLE = { owner: "Owner", admin: "Admin", moderator: "Moderator", support: "Support", custom: "Custom" };
+  const txt = (v) => (typeof v === "string" ? v : v?.en || v?.zh || "");
+  const enc = encodeURIComponent;
+  const DAY = 864e5;
+  const day = (ts) => (ts ? new Date(ts).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric" }) : "—");
+  const count = (v) => (Array.isArray(v) ? v.length : Number(v) || 0);
+  const TIER = { gold: ["Gold", "amber"], diamond: ["Diamond", "blue"] };
+  const PLAN = { agent5: "Agent 5 homes", agent10: "Agent 10 homes" };
+  const tierOf = (a) => a?.tier || a?.entitlements?.tier || null;
+  const tierTag = (t) => (TIER[t] ? `<span class="tag ${TIER[t][1]}">${TIER[t][0]}</span>` : "");
+  // Permissions (cv_admins.perms on the server; docs/API_PRODUCTION.md "Admin additions"), grouped for people.
+  const PERM_GROUPS = [
+    ["Users", [["users.read", "See users"], ["users.write", "Edit users and notes"], ["users.suspend", "Suspend and sign out"], ["users.delete", "Delete accounts"]]],
+    ["Homes", [["listings.read", "See homes"], ["listings.review", "Approve, reject, take down"], ["listings.pin", "Pin homes for free"]]],
+    ["Plans & badges", [["plans.grant", "Give memberships, agent plans and credits"], ["badges.grant", "Give badges and verification"], ["agents.review", "Review agent applications"]]],
+    ["Safety", [["chats.read", "Read chats (recorded)"], ["reports.read", "See reports"], ["reports.write", "Handle reports"]]],
+    ["Site", [["settings.write", "Site settings"], ["notify.write", "Notification templates"], ["broadcast", "Send broadcasts"]]],
+    ["Team", [["staff.write", "Manage staff"], ["testers.write", "Test accounts"], ["audit.read", "See the audit log"]]],
+  ];
+  const ALL_PERMS = PERM_GROUPS.flatMap(([, list]) => list.map(([p]) => p));
+  const TEMPLATES = {
+    admin: ALL_PERMS.filter((p) => "staff.write" !== p),
+    moderator: ["users.read", "users.suspend", "listings.read", "listings.review", "chats.read", "reports.read", "reports.write", "audit.read", "agents.review"],
+    support: ["users.read", "listings.read", "reports.read", "chats.read"],
+  };
+  // Older servers sent role-based permission names; map them to the new ones.
+  const LEGACY_PERMS = { "listings.write": ["listings.review", "listings.pin"], "plans.write": ["plans.grant", "badges.grant"], "admins.write": ["staff.write", "testers.write"], "settings.write": ["notify.write"], "users.write": ["users.suspend"] };
+  const templateOf = (perms) => Object.keys(TEMPLATES).find((t) => TEMPLATES[t].length === perms.length && TEMPLATES[t].every((p) => perms.includes(p))) || null;
   const ACTION = {
-    "account.signout": "Signed out everywhere", "account.suspend": "Suspended account", "account.unsuspend": "Lifted suspension", "account.update": "Edited account", "account.plans": "Changed membership / mode", "account.delete": "Deleted account",
-    "listing.update": "Changed home status", "listing.approve": "Approved home", "listing.reject": "Rejected home", "listing.delete": "Deleted home", "chat.read": "Read a chat", "chat.message.delete": "Deleted a message", "report.update": "Handled report",
-    "broadcast": "Sent a broadcast", "settings.update": "Changed site settings", "admin.set": "Set admin role", "admin.remove": "Removed admin",
+    "account.signout": "Signed out everywhere", "account.suspend": "Suspended account", "account.unsuspend": "Lifted suspension", "account.update": "Edited account", "account.plans": "Changed membership / mode", "account.delete": "Deleted account", "account.grant": "Gave a plan, badge or credits",
+    "listing.update": "Changed home status", "listing.approve": "Approved home", "listing.reject": "Rejected home", "listing.delete": "Deleted home", "listing.pin": "Pinned a home", "listing.unpin": "Unpinned a home", "chat.read": "Read a chat", "chat.message.delete": "Deleted a message", "report.update": "Handled report", "report.resolve": "Resolved a report",
+    "broadcast": "Sent a broadcast", "settings.update": "Changed site settings", "admin.set": "Set admin role", "admin.remove": "Removed admin", "staff.set": "Changed staff permissions", "staff.add": "Added staff", "staff.remove": "Removed staff",
+    "testers.create": "Created test accounts", "act-as": "Opened a test account", "act_as": "Opened a test account", "agent.approve": "Approved an agent", "agent.reject": "Rejected an agent", "agents.decision": "Decided an agent application",
     "notify.template": "Edited a notification", "notify.template.reset": "Reset a notification",
   };
   const ICON = {
@@ -243,6 +282,8 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     broadcast: '<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/>',
     admins: '<path d="M12 3l8 3v6c0 4.5-3.4 7.7-8 9-4.6-1.3-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
     audit: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    testers: '<path d="M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 006 21h12a1.7 1.7 0 001.5-2.5L14 9V3"/><path d="M7.5 15h9"/>',
+    agents: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.5c.5-1.6 1.7-2.5 3.2-2.5s2.7.9 3.2 2.5M14.5 10h4M14.5 13.5h3"/>',
     notifications: '<path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/>',
   };
 
@@ -257,7 +298,18 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   let TOKEN = store.get("cv-admin-token");
   let ME = null;
   let view = "overview";
-  const can = (p) => ME?.permissions?.includes(p) || (p === "users.suspend" && ME?.permissions?.includes("users.write"));
+  // What the signed-in staff member may do: /admin/me sends `perms` (new) or `permissions`/`role` (older servers).
+  let PERMS_SET = new Set();
+  const isOwner = () => Boolean(ME?.owner || "owner" === ME?.role);
+  function loadPerms() {
+    const fresh = Array.isArray(ME?.perms);
+    let list = fresh ? ME.perms : Array.isArray(ME?.permissions) ? ME.permissions : TEMPLATES[ME?.role] || [];
+    if (isOwner()) list = ALL_PERMS;
+    const out = new Set(list);
+    if (!fresh) for (const p of list) for (const q of LEGACY_PERMS[p] || []) out.add(q);
+    PERMS_SET = out;
+  }
+  const can = (p) => PERMS_SET.has(p);
 
   async function api(method, path, body) {
     const r = await fetch(API.replace(/\/$/, "") + path, {
@@ -269,7 +321,13 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     }).catch(() => { throw new Error(API === DEFAULT_API && !LOCAL ? "Can't reach the ColivEase backend right now. Try again in a moment." : "Can't reach the server. Check the address under “Server”, and that the server is running."); });
     const json = await r.json().catch(() => ({}));
     if (401 === r.status && TOKEN && !path.startsWith("/api/auth/")) { signOut(); throw new Error("Your session expired. Sign in again."); }
-    if (!r.ok) throw Object.assign(new Error(json.error || `Something went wrong (${r.status})`), { status: r.status });
+    if (!r.ok) {
+      const route = `${method} ${path.replace(/^\/api/, "").split("?")[0]}`;
+      const msg = 404 === r.status && (!json.error || /^not found$/i.test(json.error)) ? `The server doesn't have this yet (${route}). It may still be being deployed.`
+        : 503 === r.status ? json.error || "This service isn't set up on the server yet."
+        : json.error || `Something went wrong (${r.status})`;
+      throw Object.assign(new Error(msg), { status: r.status, code: json.code });
+    }
     return json;
   }
   function toast(text) {
@@ -434,21 +492,25 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   const SECTIONS = [
     ["overview", "Overview", null],
     ["accounts", "Users", "users.read"],
+    ["testers", "Test accounts", "testers.write"],
     ["listings", "Home review", "listings.read"],
+    ["agents", "Agent applications", "agents.review"],
     ["chats", "Chats", "chats.read"],
     ["reports", "Reports", "reports.read"],
     ["members", "Memberships", "users.read"],
     ["settings", "Site settings", null],
-    ["notifications", "Notifications", "settings.write"],
+    ["notifications", "Notifications", "notify.write"],
     ["broadcast", "Broadcast", "broadcast"],
-    ["admins", "Admins & roles", null],
+    ["staff", "Staff & permissions", "staff.write"],
     ["audit", "Audit log", "audit.read"],
   ];
   let openReports = 0;
   let pendingHomes = 0;
+  let pendingAgents = 0;
   function renderNav() {
+    const badge = { reports: openReports, listings: pendingHomes, agents: pendingAgents };
     $("#nav").innerHTML = SECTIONS.filter(([, , p]) => !p || can(p))
-      .map(([key, label]) => `<button data-view="${key}" class="${key === view ? "on" : ""}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[key]}</svg>${label}${key === "reports" && openReports ? `<span class="count">${openReports}</span>` : ""}${key === "listings" && pendingHomes ? `<span class="count">${pendingHomes}</span>` : ""}</button>`)
+      .map(([key, label]) => `<button data-view="${key}" class="${key === view ? "on" : ""}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[key] || ICON.admins}</svg>${label}${badge[key] ? `<span class="count">${badge[key]}</span>` : ""}</button>`)
       .join("");
     $("#nav").querySelectorAll("button").forEach((b) => (b.onclick = () => go(b.dataset.view)));
   }
@@ -467,21 +529,24 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       $("#signin-error").textContent = e.message;
       return;
     }
+    loadPerms();
     $("#signin").hidden = true;
     $("#shell").hidden = false;
     $("#who-email").textContent = ME.email;
-    $("#who-role").textContent = ROLE[ME.role] || ME.role;
+    const tpl = isOwner() ? "owner" : ME.role && !Array.isArray(ME.perms) ? ME.role : templateOf([...PERMS_SET].filter((p) => ALL_PERMS.includes(p))) || "custom";
+    $("#who-role").textContent = "custom" === tpl ? `Custom · ${plural([...PERMS_SET].filter((p) => ALL_PERMS.includes(p)).length, "permission")}` : ROLE[tpl] || tpl;
     const saved = store.get("cv-admin-view");
     go(SECTIONS.some(([k, , p]) => k === saved && (!p || can(p))) ? saved : "overview");
     refreshCounts();
   }
+  function takeCounts(o) {
+    openReports = o.openReports ?? 0;
+    pendingHomes = o.pendingListings ?? o.pendingReviews ?? 0;
+    pendingAgents = o.pendingAgents ?? o.pendingAgentApplications ?? 0;
+    renderNav();
+  }
   async function refreshCounts() {
-    try {
-      const o = await api("GET", "/api/admin/overview");
-      openReports = o.openReports;
-      pendingHomes = o.pendingListings;
-      renderNav();
-    } catch {}
+    try { takeCounts(await api("GET", "/api/admin/overview")); } catch {}
   }
   const page = (title, sub, tools = "") => `<div class="head"><div><h2>${esc(title)}</h2>${sub ? `<p>${esc(sub)}</p>` : ""}</div><div class="tools">${tools}</div></div>`;
   const loading = () => ($("#main").innerHTML = `<div class="card empty">Loading…</div>`);
@@ -492,36 +557,58 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   VIEWS.overview = async () => {
     loading();
     const o = await api("GET", "/api/admin/overview");
-    openReports = o.openReports;
-    pendingHomes = o.pendingListings;
-    renderNav();
-    const max = Math.max(1, ...o.signups.map((d) => d.count));
+    takeCounts(o);
+    const signups = o.signups || [];
+    const recent = o.recent || [];
+    const max = Math.max(1, ...signups.map((d) => d.count));
+    const real = o.realAccounts ?? (o.accounts ?? 0) - (o.testAccounts ?? 0);
+    const n = (v) => (v == null ? "—" : v);
+    const cards = [
+      ["Real accounts", real, o.activeWeek != null ? `${o.activeWeek} active this week` : "people who signed up", "accounts"],
+      ["Test accounts", n(o.testAccounts), "only seen by testers and staff", "testers"],
+      ["Live homes", n(o.liveListings), o.pinnedListings != null ? `${o.pinnedListings} pinned` : "visible right now", "listings"],
+      ["Waiting for review", n(o.pendingListings ?? o.pendingReviews), "new homes to check", "listings"],
+      ["Agent applications", n(o.pendingAgents ?? o.pendingAgentApplications), "waiting for a decision", "agents"],
+      ["Open reports", n(o.openReports), o.autoHidden != null ? `${o.autoHidden} auto-hidden` : "not resolved yet", "reports"],
+      ["Members", n(o.members), "Gold · Diamond", "members"],
+      ["Suspended", n(o.suspended), "accounts", "accounts"],
+    ];
     $("#main").innerHTML = `${page("Overview", "How ColivEase is doing right now")}
       <div class="stats">
-        ${[["Users", o.accounts, `${o.activeWeek} active this week`], ["Landlord mode", o.landlords, `${o.accounts - o.landlords} renters`], ["Members", o.members, "Plus · Landlord Pro · Agent Pro"], ["Homes", o.listings, `${o.pendingListings} waiting · ${o.hiddenListings} rejected or taken down`], ["Chats", o.conversations, plural(o.messages, "message")], ["Open reports", o.openReports, "not resolved yet"], ["Suspended", o.suspended, "accounts"], ["Signed in", o.sessions, "active sessions"]]
-          .map(([k, v, s]) => `<div class="card stat"><small>${k}</small><b>${v}</b><em>${s}</em></div>`).join("")}
+        ${cards.map(([k, v, s, to]) => `<div class="card stat" ${SECTIONS.some(([key, , p]) => key === to && (!p || can(p))) ? `data-to="${to}" style="cursor:pointer"` : ""}><small>${k}</small><b>${esc(v)}</b><em>${esc(s)}</em></div>`).join("")}
       </div>
       <div class="grid2">
-        <div class="card panel"><h3>New sign-ups, last 14 days</h3><div class="bars">${o.signups.map((d) => `<div title="${new Date(d.day).toLocaleDateString("en-CA")}: ${d.count}"><b>${d.count || ""}</b><span style="height:${(d.count / max) * 100}%"></span>${new Date(d.day).getDate()}</div>`).join("")}</div></div>
-        <div class="card panel"><h3>Latest admin actions</h3>${o.recent.length ? `<div class="list">${o.recent.map((r) => `<div class="item"><div>${esc(ACTION[r.action] || r.action)}<span class="sub">${esc(r.admin || "")} · ${ago(r.at)}</span></div>${r.reason ? `<span class="tag">${esc(r.reason)}</span>` : ""}</div>`).join("")}</div>` : `<p class="hint">Nothing yet.</p>`}</div>
+        <div class="card panel"><h3>New sign-ups, last 14 days</h3>${signups.length ? `<div class="bars">${signups.map((d) => `<div title="${new Date(d.day).toLocaleDateString("en-CA")}: ${d.count}"><b>${d.count || ""}</b><span style="height:${(d.count / max) * 100}%"></span>${new Date(d.day).getDate()}</div>`).join("")}</div>` : `<p class="hint">No data yet.</p>`}</div>
+        <div class="card panel"><h3>Latest staff actions</h3>${recent.length ? `<div class="list">${recent.map((r) => `<div class="item"><div>${esc(ACTION[r.action] || r.action)}<span class="sub">${esc(r.admin || "")} · ${ago(r.at)}</span></div>${r.reason ? `<span class="tag">${esc(r.reason)}</span>` : ""}</div>`).join("")}</div>` : `<p class="hint">Nothing yet.</p>`}</div>
       </div>`;
+    $("#main").querySelectorAll("[data-to]").forEach((c) => (c.onclick = () => go(c.dataset.to)));
   };
 
   // Users
   let acctFilter = "all", acctQuery = "";
   VIEWS.accounts = async (filterOverride) => {
     const filter = filterOverride || acctFilter;
-    $("#main").innerHTML = `${page(filterOverride === "members" ? "Memberships" : "Users", filterOverride === "members" ? "Accounts with a membership. Turn plans on or off from each account." : "Every account: profile, status and permissions", `<input class="input" id="q" placeholder="Search email, name or ID" value="${esc(acctQuery)}">`)}
-      ${filterOverride ? "" : `<div class="chips">${[["all", "All"], ["renter", "Renters"], ["landlord", "Landlords"], ["members", "Members"], ["suspended", "Suspended"], ["admins", "Admins"]].map(([k, l]) => `<button class="chip ${k === filter ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>`}
+    $("#main").innerHTML = `${page(filterOverride === "members" ? "Memberships" : "Users", filterOverride === "members" ? "Accounts with Gold or Diamond. Open an account to give or remove a plan." : "Every account: profile, status and permissions", `<input class="input" id="q" placeholder="Search email, name or ID" value="${esc(acctQuery)}">`)}
+      ${filterOverride ? "" : `<div class="chips">${[["all", "All"], ["real", "Real accounts"], ["test", "Test accounts"], ["agents", "Agents"], ["members", "Gold & Diamond"], ["suspended", "Suspended"], ["admins", "Staff"]].map(([k, l]) => `<button class="chip ${k === filter ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>`}
       <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
     $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { acctFilter = b.dataset.f; VIEWS.accounts(); }));
     let timer;
     $("#q").oninput = (e) => { clearTimeout(timer); timer = setTimeout(() => { acctQuery = e.target.value; load(); }, 250); };
+    // Filtered on the server; the same rules again here in case an older server ignores a filter.
+    const keep = {
+      real: (a) => !a.test, test: (a) => Boolean(a.test), agents: (a) => "agent" === a.kind,
+      members: (a) => Boolean(TIER[tierOf(a)] || a.plans?.plus || a.plans?.landlordPro || a.plans?.agentPro),
+      suspended: (a) => Boolean(a.suspended), admins: (a) => Boolean(a.adminRole || a.staff),
+    };
     async function load() {
-      const { accounts } = await api("GET", `/api/admin/accounts?q=${encodeURIComponent(acctQuery)}&filter=${filter}`);
-      $("#tbl").innerHTML = accounts.length
-        ? `<table><thead><tr><th>User</th><th>Mode</th><th>Community</th><th>Membership</th><th>Homes</th><th>Chats</th><th>Last active</th><th>Status</th></tr></thead><tbody>${accounts
-            .map((a) => `<tr class="click" data-id="${esc(a.id)}"><td><b>${esc(a.name || "(no name)")}</b><span class="sub">${esc(a.email)}</span></td><td>${a.mode === "landlord" ? `<span class="tag amber">Landlord</span>` : `<span class="tag">Renter</span>`}</td><td>${esc(a.languages.map((k) => LANG[k] || k).join(", ") || "—")}</td><td><div class="tags">${a.plans.plus ? `<span class="tag blue">Plus</span>` : ""}${a.plans.landlordPro ? `<span class="tag green">Landlord Pro</span>` : ""}${a.plans.agentPro ? `<span class="tag amber">Agent Pro</span>` : ""}${Object.values(a.plans).some(Boolean) ? "" : "—"}</div></td><td>${a.listings}</td><td>${a.conversations}<span class="sub">${plural(a.messages, "message")}</span></td><td>${ago(a.lastActive)}</td><td><div class="tags">${a.suspended ? `<span class="tag red">Suspended</span>` : `<span class="tag green">Active</span>`}${a.verified ? `<span class="tag blue">Verified</span>` : ""}${a.adminRole ? `<span class="tag amber">${ROLE[a.adminRole]}</span>` : ""}</div></td></tr>`)
+      const { accounts = [] } = await api("GET", `/api/admin/accounts?q=${enc(acctQuery)}&filter=${filter}`);
+      const list = accounts.filter(keep[filter] || (() => true));
+      $("#tbl").innerHTML = list.length
+        ? `<table><thead><tr><th>User</th><th>Type</th><th>Community</th><th>Plan</th><th>Homes</th><th>Last active</th><th>Status</th></tr></thead><tbody>${list
+            .map((a) => {
+              const e = a.entitlements || {};
+              return `<tr class="click" data-id="${esc(a.id)}"><td><b>${esc(txt(a.name) || "(no name)")}</b><span class="sub">${esc(a.email || "")}</span></td><td><div class="tags">${"agent" === a.kind ? `<span class="tag amber">Agent</span>` : `<span class="tag">Member</span>`}${a.test ? `<span class="tag blue">Test</span>` : ""}</div></td><td>${esc((a.languages || []).map((k) => LANG[k] || k).join(", ") || "—")}</td><td><div class="tags">${tierTag(tierOf(a))}${PLAN[a.agentPlan || e.agentPlan] ? `<span class="tag green">${PLAN[a.agentPlan || e.agentPlan]}</span>` : ""}${a.plans?.plus ? `<span class="tag blue">Plus</span>` : ""}${TIER[tierOf(a)] || PLAN[a.agentPlan || e.agentPlan] || a.plans?.plus ? "" : "—"}</div></td><td>${count(a.listings)}</td><td>${ago(a.lastActive)}</td><td><div class="tags">${a.suspended ? `<span class="tag red">Suspended</span>` : `<span class="tag green">Active</span>`}${a.verified || (e.badges || a.badges || []).includes("verified") ? `<span class="tag blue">Verified</span>` : ""}${a.adminRole || a.staff ? `<span class="tag amber">${esc(ROLE[a.adminRole] || "Staff")}</span>` : ""}</div></td></tr>`;
+            })
             .join("")}</tbody></table>`
         : `<div class="empty">No accounts match.</div>`;
       $("#tbl").querySelectorAll("tr[data-id]").forEach((tr) => (tr.onclick = () => openAccount(tr.dataset.id)));
@@ -530,163 +617,348 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   };
   VIEWS.members = () => VIEWS.accounts("members");
 
-  const HSTAT = { pending: ["Waiting", "amber"], visible: ["Live", "green"], rejected: ["Not approved", "red"], hidden: ["Taken down", ""] };
+  // Homes: review state, pin and the 60-day expiry, worked out the same way everywhere in the panel.
+  const HSTAT = { pending: ["Waiting", "amber"], visible: ["Live", "green"], rejected: ["Not approved", "red"], hidden: ["Taken down", ""], auto_hidden: ["Hidden by reports", "red"] };
+  function homeInfo(l) {
+    const m = l.moderation || {};
+    const t = Date.now();
+    const pinnedUntil = l.pinnedUntil ?? m.pinnedUntil ?? null;
+    const pinned = Boolean((pinnedUntil && pinnedUntil > t) || l.planPinned || (l.pinned && !pinnedUntil));
+    const base = l.renewedAt || l.postedAt || l.createdAt || null;
+    const expiresAt = l.expiresAt ?? (base ? base + 60 * DAY : null);
+    const raw = m.status || l.status || "pending";
+    const autoHidden = Boolean(l.autoHidden || m.autoHidden || ["auto_hidden", "autohidden", "reported"].includes(raw));
+    return { status: autoHidden ? "auto_hidden" : raw, autoHidden, pinned, pinnedUntil: pinnedUntil && pinnedUntil > t ? pinnedUntil : null, expiresAt, expired: Boolean(!pinned && expiresAt && expiresAt < t), reports: count(l.reports ?? m.reports ?? l.reportCount), note: m.note || l.note || "" };
+  }
+  const statusTag = (h) => `<span class="tag ${HSTAT[h.status]?.[1] || ""}">${HSTAT[h.status]?.[0] || esc(h.status)}</span>`;
+  const pinText = (h) => (h.pinned ? (h.pinnedUntil ? `Pinned until ${day(h.pinnedUntil)}` : "Pinned (agent plan)") : "Not pinned");
+  const expiryText = (h) => (h.pinned ? "Doesn't expire while pinned" : !h.expiresAt ? "Expiry unknown" : h.expired ? `Expired ${day(h.expiresAt)}` : `Expires ${day(h.expiresAt)}`);
+  const priceText = (l) => (l.priceNegotiable || null == l.price ? "Negotiable" : `$${esc(l.price)}`);
+  const BADGES = [["verified", "Verified"], ["agent", "Licensed agent"], ["captain", "Captain"], ["student", "Student"], ["landlord", "Landlord"]];
+  const rawId = (id) => String(id || "").replace(/^acct:/, "");
+
+  // Test accounts: the server hands back a session for that account; the website signs in with it (#cv-token=).
+  async function actAs(accountId) {
+    const w = window.open("about:blank", "_blank");
+    try {
+      const { token } = await api("POST", "/api/admin/act-as", { accountId });
+      if (!token) throw new Error("The server didn't send a session for this account.");
+      const url = `https://www.colivease.ca/app.html#cv-token=${enc(token)}`;
+      if (w) {
+        w.opener = null;
+        w.location.href = url;
+        toast("Opened in a new tab as the test account");
+      } else await dialog({ title: "Open the test account", body: `<p class="hint">Your browser blocked the new tab.</p><p><a href="${esc(url)}" target="_blank" rel="noopener">Open ColivEase as this account</a></p>`, confirm: "Done" });
+    } catch (e) {
+      w?.close();
+      toast(e.message);
+    }
+  }
+  const grantTo = async (id, body, msg) => {
+    try { await api("POST", `/api/admin/accounts/${enc(id)}/grant`, body); toast(msg); return true; } catch (e) { toast(e.message); return false; }
+  };
+
   async function openAccount(id) {
-    const a = await api("GET", `/api/admin/accounts/${encodeURIComponent(id)}`);
+    let a;
+    try { a = await api("GET", `/api/admin/accounts/${enc(id)}`); } catch (e) { return toast(e.message); }
     const p = a.profile || {};
-    const name = typeof p.name === "string" ? p.name : p.name?.en || p.name?.zh || a.name;
-    const txt = (v) => (typeof v === "string" ? v : v?.en || v?.zh || "");
+    const name = txt(p.name) || txt(a.name);
+    const e = a.entitlements || {};
+    const badges = e.badges || a.badges || [];
+    const verifiedUntil = e.verifiedUntil || null;
+    const isVerified = Boolean((verifiedUntil && verifiedUntil > Date.now()) || badges.includes("verified") || a.verified);
+    const extraBadges = badges.filter((b) => !BADGES.some(([k]) => k === b));
+    const homes = Array.isArray(a.homes) ? a.homes : Array.isArray(a.listings) ? a.listings : [];
+    const threads = (a.threads || a.conversations || []).map((c) => normThread(c, a.people || {}));
+    const reports = a.reports || [];
+    const app = a.agentApplication;
+    const isStaffOwner = "owner" === a.adminRole || a.owner;
+    const v = e.verified || {};
+    const yes = (b) => (b ? "✓" : "—");
     const el = drawer(`
-      <div><h3>${esc(name || "(no name)")}</h3><p class="hint">${esc(a.email)} · ${esc(a.id)}</p></div>
+      <div><h3>${esc(name || "(no name)")}</h3><p class="hint">${esc(a.email || "")} · ${esc(a.id)}</p>
+        <div class="tags" style="margin-top:6px">${"agent" === a.kind ? `<span class="tag amber">Agent account</span>` : `<span class="tag">Member account</span>`}${a.test ? `<span class="tag blue">Test account</span>` : ""}${tierTag(e.tier || a.tier)}${badges.map((b) => `<span class="tag green">${esc(BADGES.find(([k]) => k === b)?.[1] || b)}</span>`).join("")}</div></div>
+      ${a.test && can("testers.write") ? `<div class="notice blue row" style="justify-content:space-between"><span>Test account: only other test accounts and staff can see it.</span><button class="btn small primary" id="act-as">Open as this account</button></div>` : ""}
       ${a.suspended ? `<div class="notice">Suspended: ${esc(a.suspendReason || "no reason given")}</div>` : ""}
       <section><h4>PROFILE</h4><div class="kv">
-        <span>Mode</span><span>${a.mode === "landlord" ? "Landlord" : "Renter"}</span>
-        <span>Community</span><span>${esc((a.languages || []).map((k) => LANG[k] || k).join(", ") || "—")}</span>
+        <span>Community</span><span>${esc((a.languages || p.languages || []).map((k) => LANG[k] || k).join(", ") || "—")}</span>
         <span>Joined</span><span>${fmt(a.createdAt)}</span>
         <span>Last active</span><span>${fmt(a.lastActive)}</span>
-        <span>Signed in on</span><span>${plural(a.sessions, "device")}</span>
-        <span>Age / area</span><span>${esc(p.age ?? "—")} / ${esc(p.district ?? p.area ?? "—")}</span>
+        ${a.sessions != null ? `<span>Signed in on</span><span>${plural(a.sessions, "device")}</span>` : ""}
+        <span>Age / areas</span><span>${esc(p.age ?? "—")} / ${esc((Array.isArray(p.areas) ? p.areas.join(", ") : p.district ?? p.area) || "—")}</span>
         <span>Budget</span><span>${p.budget ? esc(Array.isArray(p.budget) ? p.budget.map((n) => `$${n}`).join(" – ") : p.budget) : "—"}</span>
         <span>About</span><span>${esc(txt(p.bio) || "—")}</span>
       </div></section>
-      ${can("users.write") ? `<section><h4>VERIFICATION & NOTES</h4><label class="toggle"><input type="checkbox" id="verified" ${a.verified ? "checked" : ""}>Verified by ColivEase (shows the verified badge)</label><textarea class="input" id="note" rows="2" placeholder="Internal note (the user never sees it)">${esc(a.note || "")}</textarea><div><button class="btn small" id="save-note">Save</button></div></section>` : ""}
-      ${can("plans.write") ? `<section><h4>MEMBERSHIP & MODE</h4><div class="row"><label class="toggle"><input type="checkbox" data-plan="plus" ${a.plans.plus ? "checked" : ""}>ColivEase Plus</label><label class="toggle"><input type="checkbox" data-plan="landlordPlan" ${a.plans.landlordPro ? "checked" : ""}>Landlord Pro</label><label class="toggle"><input type="checkbox" data-plan="agentPro" ${a.plans.agentPro ? "checked" : ""}>Agent Pro</label></div><div class="row"><span class="hint">Mode</span><select class="input" id="mode" style="width:auto"><option value="seeker" ${a.mode !== "landlord" ? "selected" : ""}>Renter</option><option value="landlord" ${a.mode === "landlord" ? "selected" : ""}>Landlord</option></select></div></section>` : ""}
-      <section><h4>HOMES POSTED (${a.homes.length})</h4>${a.homes.length ? `<div class="list">${a.homes.map((h) => `<div class="item"><div>${esc(txt(h.title))}<span class="sub">$${esc(h.price)} · ${esc(h.district || "")}</span></div><span class="tag ${HSTAT[h.moderation.status]?.[1] || ""}">${HSTAT[h.moderation.status]?.[0] || esc(h.moderation.status)}</span></div>`).join("")}</div>` : `<p class="hint">None.</p>`}</section>
-      ${can("chats.read") ? `<section><h4>CHATS (${a.conversations.length})</h4>${a.conversations.length ? `<div class="list">${a.conversations.map((c) => `<div class="item"><div>${esc(c.title)}<span class="sub">${KIND[c.type] || c.type} · ${plural(c.messages, "message")} · ${ago(c.last)}</span></div><button class="btn small" data-chat="${esc(c.id)}">Open</button></div>`).join("")}</div>` : `<p class="hint">None.</p>`}</section>` : ""}
-      <section><h4>REPORTS THEY MADE (${a.reports.length})</h4>${a.reports.length ? `<div class="list">${a.reports.map((r) => `<div class="item"><div>${esc(r.reason)}<span class="sub">${esc(r.details || "")} · ${ago(r.ts)}</span></div></div>`).join("")}</div>` : `<p class="hint">None.</p>`}</section>
+      <section><h4>PLANS & CREDITS</h4><div class="kv">
+        <span>Membership</span><span>${TIER[e.tier] ? `${TIER[e.tier][0]}${e.tierUntil ? ` until ${day(e.tierUntil)}` : ""}` : "Free"}</span>
+        <span>Agent plan</span><span>${PLAN[e.agentPlan] ? `${PLAN[e.agentPlan]}${e.agentUntil ? ` until ${day(e.agentUntil)}` : ""}` : "None"}</span>
+        <span>Invite credits</span><span>${esc(e.inviteCredits ?? 0)} · ${esc(e.invitesToday ?? 0)} sent today (${esc(e.freeInvitesPerDay ?? 3)} free a day, max ${esc(e.maxInvitesPerDay ?? 50)})</span>
+        <span>Lease checks</span><span>${esc(e.leaseChecks ?? 0)}</span>
+        <span>Contract credits</span><span>${esc(e.contractCredits ?? 0)}</span>
+        <span>Verification</span><span>Email ${yes(v.email)} · Phone ${yes(v.phone)} · ID ${yes(v.identity)}${verifiedUntil ? ` · badge until ${day(verifiedUntil)}` : ""}</span>
+        <span>Teams</span><span>${esc(e.teamsCreated ?? 0)} of ${esc(e.teamLimit ?? "—")} created</span>
+        <span>Live homes</span><span>${esc(e.liveListings ?? 0)} of ${esc(e.listingLimit ?? "—")}</span>
+      </div>${a.entitlements ? "" : `<p class="hint">The server didn't send plan details for this account.</p>`}</section>
+      ${can("plans.grant") || can("badges.grant") ? `<section><h4>GIVE FOR FREE</h4><p class="hint">No payment and no checks. It applies right away.</p>
+        ${can("plans.grant") ? `
+        <div class="grant"><b>Membership</b><div class="row"><select class="input sm" id="g-tier"><option value="gold">Gold</option><option value="diamond" ${"diamond" === e.tier ? "selected" : ""}>Diamond</option></select><span class="hint">for</span><input class="input sm num" id="g-tier-days" type="number" min="1" max="3650" value="30"><span class="hint">days</span><button class="btn small primary" id="g-tier-go">Give</button>${TIER[e.tier] ? `<button class="btn small danger" id="g-tier-rm">Remove</button>` : ""}</div></div>
+        <div class="grant"><b>Agent plan</b><div class="row"><select class="input sm" id="g-plan"><option value="agent5">5 live homes</option><option value="agent10" ${"agent10" === e.agentPlan ? "selected" : ""}>10 live homes</option></select><span class="hint">for</span><input class="input sm num" id="g-plan-days" type="number" min="1" max="3650" value="30"><span class="hint">days</span><button class="btn small primary" id="g-plan-go">Give</button>${PLAN[e.agentPlan] ? `<button class="btn small danger" id="g-plan-rm">Remove</button>` : ""}</div>${"agent" === a.kind ? "" : `<span class="hint">Agent plans only matter for agent accounts.</span>`}</div>
+        <div class="grant"><b>Credits</b><span class="hint">Sets each balance to the number you enter.</span><div class="row">
+          <label class="field">Invites<input class="input sm num" id="g-inv" type="number" min="0" max="10000" value="${esc(e.inviteCredits ?? 0)}"></label>
+          <label class="field">Lease checks<input class="input sm num" id="g-lease" type="number" min="0" max="1000" value="${esc(e.leaseChecks ?? 0)}"></label>
+          <label class="field">Contracts<input class="input sm num" id="g-contract" type="number" min="0" max="1000" value="${esc(e.contractCredits ?? 0)}"></label>
+        </div><div><button class="btn small primary" id="g-credits-go">Save credits</button></div></div>` : ""}
+        ${can("badges.grant") ? `
+        <div class="grant"><b>Verified badge</b><div class="row"><span class="hint">for</span><input class="input sm num" id="g-ver-years" type="number" min="1" max="10" value="3"><span class="hint">years</span><button class="btn small primary" id="g-ver-go">Mark verified</button>${isVerified ? `<button class="btn small danger" id="g-ver-rm">Remove</button>` : ""}</div></div>
+        <div class="grant"><b>Badges</b><div class="row">${BADGES.map(([k, l]) => `<label class="toggle"><input type="checkbox" data-badge="${k}" ${badges.includes(k) ? "checked" : ""}>${l}</label>`).join("")}</div>
+          <input class="input" id="g-badges-extra" placeholder="Other badges, separated by commas (e.g. early-supporter, ambassador)" value="${esc(extraBadges.join(", "))}">
+          <div><button class="btn small primary" id="g-badges-go">Save badges</button></div></div>` : ""}
+      </section>` : ""}
+      ${app ? `<section><h4>AGENT APPLICATION</h4><div class="kv"><span>Status</span><span>${esc(app.status)}</span><span>Full name</span><span>${esc(app.fullName || "—")}</span><span>RECO number</span><span>${esc(app.reco || "—")} <a href="https://registrantsearch.reco.on.ca/" target="_blank" rel="noopener">Look up</a></span><span>Brokerage</span><span>${esc(app.brokerage || "—")}</span>${app.note ? `<span>Note</span><span>${esc(app.note)}</span>` : ""}</div>${can("agents.review") ? `<div><button class="btn small" id="to-agents">Open agent applications</button></div>` : ""}</section>` : ""}
+      ${can("users.write") ? `<section><h4>INTERNAL NOTE</h4><textarea class="input" id="note" rows="2" placeholder="The user never sees this">${esc(a.note || "")}</textarea><div><button class="btn small" id="save-note">Save note</button></div></section>` : ""}
+      <section><h4>HOMES POSTED (${homes.length})</h4>${homes.length ? `<div class="list">${homes.map((l) => { const h = homeInfo(l); return `<div class="item"><div>${esc(txt(l.title) || "(no title)")}<span class="sub">${priceText(l)} · ${esc(l.district || "")} · ${pinText(h)} · ${expiryText(h)}</span></div>${statusTag(h)}</div>`; }).join("")}</div>` : `<p class="hint">None.</p>`}</section>
+      ${can("chats.read") ? `<section><h4>CHATS (${threads.length})</h4>${threads.length ? `<div class="list">${threads.map((t) => `<div class="item"><div>${esc(t.title || t.members.map((m) => txt(m.name) || m.email || m.id).join(", ") || t.id)}<span class="sub">${KIND[t.kind] || esc(t.kind)} · ${plural(t.count, "message")} · ${ago(t.last)}</span></div><button class="btn small" data-chat="${esc(t.id)}" data-legacy="${t.legacy ? "1" : ""}">Open</button></div>`).join("")}</div>` : `<p class="hint">None.</p>`}</section>` : ""}
+      <section><h4>REPORTS THEY MADE (${reports.length})</h4>${reports.length ? `<div class="list">${reports.map((r) => `<div class="item"><div>${esc(REASON[r.reason] || r.reason)}<span class="sub">${esc(r.details ?? r.note ?? "")} · ${ago(r.at ?? r.ts)}</span></div></div>`).join("")}</div>` : `<p class="hint">None.</p>`}</section>
       <section><h4>ACCOUNT</h4><div class="row">
-        ${can("users.suspend") && a.adminRole !== "owner" ? (a.suspended ? `<button class="btn" id="unsuspend">Lift suspension</button>` : `<button class="btn danger" id="suspend">Suspend</button>`) : ""}
+        ${can("users.suspend") && !isStaffOwner ? (a.suspended ? `<button class="btn" id="unsuspend">Lift suspension</button>` : `<button class="btn danger" id="suspend">Suspend</button>`) : ""}
         ${can("users.suspend") ? `<button class="btn" id="kick">Sign out everywhere</button>` : ""}
-        ${can("users.delete") && a.adminRole !== "owner" ? `<button class="btn danger" id="delete">Delete account</button>` : ""}
+        ${can("users.delete") && !isStaffOwner ? `<button class="btn danger" id="delete">Delete account</button>` : ""}
       </div></section>`);
-    const refresh = () => { openAccount(id); if (["accounts", "members"].includes(view)) VIEWS[view](); };
-    const post = async (body, msg) => { try { await api("POST", `/api/admin/accounts/${encodeURIComponent(id)}`, body); toast(msg); refresh(); } catch (e) { toast(e.message); } };
-    el.querySelector("#save-note") && (el.querySelector("#save-note").onclick = () => post({ verified: el.querySelector("#verified").checked, note: el.querySelector("#note").value }, "Saved"));
-    el.querySelectorAll("[data-plan]").forEach((cb) => (cb.onchange = () => post({ [cb.dataset.plan]: cb.dataset.plan === "landlordPlan" ? (cb.checked ? "pro" : "free") : cb.checked }, "Membership updated")));
-    el.querySelector("#mode") && (el.querySelector("#mode").onchange = (e) => post({ role: e.target.value }, "Mode changed"));
-    el.querySelector("#suspend") && (el.querySelector("#suspend").onclick = async () => {
+    const refresh = () => { openAccount(id); if (["accounts", "members", "testers"].includes(view)) VIEWS[view](); };
+    const post = async (body, msg) => { try { await api("POST", `/api/admin/accounts/${enc(id)}`, body); toast(msg); refresh(); } catch (er) { toast(er.message); } };
+    const grant = async (body, msg) => { if (await grantTo(id, body, msg)) refresh(); };
+    const num = (sel) => Number($(sel, el)?.value);
+    const on = (sel, fn) => { const b = $(sel, el); if (b) b.onclick = fn; };
+    on("#act-as", () => actAs(a.id));
+    on("#to-agents", () => go("agents"));
+    on("#save-note", () => post({ note: $("#note", el).value }, "Note saved"));
+    on("#g-tier-go", () => { const d = num("#g-tier-days"); if (!(d > 0)) return toast("Enter a number of days"); grant({ tier: $("#g-tier", el).value, tierDays: d }, `${TIER[$("#g-tier", el).value][0]} given for ${plural(d, "day")}`); });
+    on("#g-tier-rm", () => grant({ tier: "free", tierDays: 0 }, "Membership removed"));
+    on("#g-plan-go", () => { const d = num("#g-plan-days"); if (!(d > 0)) return toast("Enter a number of days"); grant({ agentPlan: $("#g-plan", el).value, agentDays: d }, `Agent plan given for ${plural(d, "day")}`); });
+    on("#g-plan-rm", () => grant({ agentPlan: null, agentDays: 0 }, "Agent plan removed"));
+    on("#g-credits-go", () => {
+      const vals = [num("#g-inv"), num("#g-lease"), num("#g-contract")];
+      if (vals.some((x) => !(x >= 0))) return toast("Credits must be 0 or more");
+      grant({ inviteCredits: vals[0], leaseChecks: vals[1], contractCredits: vals[2] }, "Credits saved");
+    });
+    on("#g-ver-go", () => { const y = num("#g-ver-years"); if (!(y > 0)) return toast("Enter a number of years"); grant({ verifiedYears: y }, `Verified for ${plural(y, "year")}`); });
+    on("#g-ver-rm", () => grant({ verifiedYears: 0, badges: badges.filter((b) => "verified" !== b) }, "Verified badge removed"));
+    on("#g-badges-go", () => {
+      const picked = [...el.querySelectorAll("[data-badge]")].filter((c) => c.checked).map((c) => c.dataset.badge);
+      const extra = $("#g-badges-extra", el).value.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+      grant({ badges: [...new Set([...picked, ...extra])] }, "Badges saved");
+    });
+    on("#suspend", async () => {
       const r = await dialog({ title: "Suspend this account?", body: `<p class="hint">They're signed out right away and can't sign in again until you lift it.</p>`, fields: [{ name: "reason", label: "Reason", required: true, minlength: 2, placeholder: "e.g. scam, harassment, fake listing" }], confirm: "Suspend", danger: true });
       if (r) post({ suspended: true, reason: r.reason }, "Suspended");
     });
-    el.querySelector("#unsuspend") && (el.querySelector("#unsuspend").onclick = () => post({ suspended: false, reason: null }, "Suspension lifted"));
-    el.querySelector("#kick") && (el.querySelector("#kick").onclick = async () => {
-      try { await api("POST", `/api/admin/accounts/${encodeURIComponent(id)}/signout`, {}); toast("Signed out everywhere"); refresh(); } catch (e) { toast(e.message); }
+    on("#unsuspend", () => post({ suspended: false, reason: null }, "Suspension lifted"));
+    on("#kick", async () => {
+      try { await api("POST", `/api/admin/accounts/${enc(id)}/signout`, {}); toast("Signed out everywhere"); refresh(); } catch (er) { toast(er.message); }
     });
-    el.querySelector("#delete") && (el.querySelector("#delete").onclick = async () => {
-      const r = await dialog({ title: "Delete this account for good?", body: `<p class="hint">Their account, profile, chats and the homes they posted are deleted and can't be restored. Type their email to confirm.</p>`, fields: [{ name: "email", label: "Email", required: true, placeholder: a.email }, { name: "reason", label: "Reason", required: true }], confirm: "Delete for good", danger: true });
+    on("#delete", async () => {
+      const r = await dialog({ title: "Delete this account for good?", body: `<p class="hint">Their account, profile, photos and homes are deleted and can't be restored. Type their email to confirm.</p>`, fields: [{ name: "email", label: "Email", required: true, placeholder: a.email }, { name: "reason", label: "Reason", required: true }], confirm: "Delete for good", danger: true });
       if (!r) return;
-      if (r.email.trim().toLowerCase() !== a.email) return toast("That email doesn't match. Nothing was deleted.");
-      try { await api("DELETE", `/api/admin/accounts/${encodeURIComponent(id)}?reason=${encodeURIComponent(r.reason)}`); toast("Deleted"); closeDrawer(); VIEWS[view](); } catch (e) { toast(e.message); }
+      if (r.email.trim().toLowerCase() !== String(a.email).toLowerCase()) return toast("That email doesn't match. Nothing was deleted.");
+      try { await api("DELETE", `/api/admin/accounts/${enc(id)}?reason=${enc(r.reason)}`); toast("Deleted"); closeDrawer(); VIEWS[view](); } catch (er) { toast(er.message); }
     });
-    el.querySelectorAll("[data-chat]").forEach((b) => (b.onclick = () => openChat(id, b.dataset.chat)));
+    el.querySelectorAll("[data-chat]").forEach((b) => (b.onclick = () => openChat(b.dataset.chat, b.dataset.legacy ? id : null)));
   }
 
   // Homes
   let homeStatus = "pending", homeQuery = "";
+  const SERVER_STATUS = new Set(["pending", "visible", "rejected", "hidden", "all"]);
   VIEWS.listings = async () => {
-    $("#main").innerHTML = `${page("Home review", "Posted → waiting for review → live for everyone once you approve it. If you reject or take down a home, its poster is told why.", `<input class="input" id="q" placeholder="Search title, poster or area" value="${esc(homeQuery)}">`)}
-      <div class="chips">${[["pending", "Waiting"], ["visible", "Live"], ["rejected", "Not approved"], ["hidden", "Taken down"], ["featured", "Featured (VIP)"], ["all", "All"]].map(([k, l]) => `<button class="chip ${k === homeStatus ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
+    $("#main").innerHTML = `${page("Home review", "Every new home is checked by a person before it goes live. Homes expire 60 days after posting unless pinned. When 3 different people report a home, it's hidden until you decide.", `<input class="input" id="q" placeholder="Search title, poster or area" value="${esc(homeQuery)}">`)}
+      <div class="chips">${[["pending", "Waiting"], ["visible", "Live"], ["pinned", "Pinned"], ["auto_hidden", "Hidden by reports"], ["rejected", "Not approved"], ["hidden", "Taken down"], ["expired", "Expired"], ["all", "All"]].map(([k, l]) => `<button class="chip ${k === homeStatus ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
       <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
     $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { homeStatus = b.dataset.f; VIEWS.listings(); }));
     let timer;
     $("#q").oninput = (e) => { clearTimeout(timer); timer = setTimeout(() => { homeQuery = e.target.value; load(); }, 250); };
+    const review = can("listings.review");
+    const pin = can("listings.pin");
     async function load() {
-      const { listings } = await api("GET", `/api/admin/listings?q=${encodeURIComponent(homeQuery)}&status=${homeStatus}`);
-      $("#tbl").innerHTML = listings.length
-        ? `<table><thead><tr><th>Home</th><th>Posted by</th><th>Price</th><th>Community</th><th>Status</th><th>Featured</th><th></th></tr></thead><tbody>${listings
-            .map((l) => `<tr data-id="${esc(l.id)}"><td><b>${esc(l.title || "(no title)")}</b><span class="sub">${esc([l.district, l.area].filter(Boolean).join(" · "))} · ${plural(l.photos, "photo")} · ${ago(l.updatedAt)}</span></td><td>${esc(l.email || "")}<span class="sub">${l.poster === "landlord" ? "Landlord" : "Sublet"}</span></td><td>$${esc(l.price ?? "—")}</td><td>${esc(l.speaks.map((k) => LANG[k] || k).join(", ") || "—")}</td><td><span class="tag ${HSTAT[l.moderation.status]?.[1] || ""}">${HSTAT[l.moderation.status]?.[0] || esc(l.moderation.status)}</span>${l.moderation.note ? `<span class="sub">${esc(l.moderation.note)}</span>` : ""}</td><td>${can("listings.write") ? `<select class="input" data-feat style="width:auto;height:34px;padding:0 10px">${[["", "Not featured"], ["gold", "Gold"], ["aurora", "Aurora"], ["holo", "Holo"]].map(([v, t]) => `<option value="${v}" ${(l.moderation.featured || "") === v ? "selected" : ""}>${t}</option>`).join("")}</select>` : esc(l.moderation.featured || "—")}</td><td><div class="row">${can("listings.write") ? `${l.moderation.status === "pending" ? `<button class="btn small primary" data-approve>Approve</button><button class="btn small" data-reject>Reject</button>` : l.moderation.status === "visible" ? `<button class="btn small" data-hide>Take down</button>` : `<button class="btn small" data-show>Put live</button>`}<button class="btn small danger" data-del>Delete</button>` : ""}</div></td></tr>`)
+      const { listings = [] } = await api("GET", `/api/admin/listings?q=${enc(homeQuery)}&status=${SERVER_STATUS.has(homeStatus) ? homeStatus : "all"}`);
+      const rows = listings.map((l) => ({ l, h: homeInfo(l) })).filter(({ h }) => ("all" === homeStatus ? true : "pinned" === homeStatus ? h.pinned : "expired" === homeStatus ? h.expired : h.status === homeStatus));
+      $("#tbl").innerHTML = rows.length
+        ? `<table><thead><tr><th>Home</th><th>Posted by</th><th>Price</th><th>Status</th><th>Pin & expiry</th><th></th></tr></thead><tbody>${rows
+            .map(({ l, h }) => `<tr data-id="${esc(l.id)}"><td><b>${esc(txt(l.title) || "(no title)")}</b><span class="sub">${esc([l.district, txt(l.area)].filter(Boolean).join(" · "))} · ${plural(count(l.photos), "photo")} · posted ${day(l.postedAt || l.createdAt || l.updatedAt)}</span></td><td>${esc(l.email || l.hostName || "")}<span class="sub">${esc({ landlord: "Landlord", agent: "Agent", sublet: "Sublet" }[l.poster || l.hostKind] || l.poster || "")}${l.test ? ` · <span class="tag blue">Test</span>` : ""}</span></td><td>${priceText(l)}</td><td>${statusTag(h)}${h.reports ? `<span class="sub">${plural(h.reports, "report")}</span>` : ""}${h.note ? `<span class="sub">${esc(h.note)}</span>` : ""}</td><td>${h.pinned ? `<span class="tag blue">${pinText(h)}</span>` : `<span class="hint">${pinText(h)}</span>`}<span class="sub">${expiryText(h)}</span></td><td><div class="row">${
+              review ? ("pending" === h.status ? `<button class="btn small primary" data-approve>Approve</button><button class="btn small" data-reject>Reject</button>`
+                : "auto_hidden" === h.status ? `<button class="btn small primary" data-show>Restore</button><button class="btn small" data-hide>Keep hidden</button>`
+                : "visible" === h.status ? `<button class="btn small" data-hide>Take down</button>` : `<button class="btn small" data-show>Put live</button>`) : ""}${
+              pin ? (h.pinnedUntil ? `<button class="btn small" data-unpin>Unpin</button>` : h.pinned ? "" : `<button class="btn small" data-pin>Pin free</button>`) : ""}${
+              review ? `<button class="btn small danger" data-del>Delete</button>` : ""}</div></td></tr>`)
             .join("")}</tbody></table>`
         : `<div class="empty">No homes here.</div>`;
       $("#tbl").querySelectorAll("tr[data-id]").forEach((tr) => {
         const id = tr.dataset.id;
-        const post = async (body, msg) => { try { await api("POST", `/api/admin/listings/${encodeURIComponent(id)}`, body); toast(msg); load(); refreshCounts(); } catch (e) { toast(e.message); } };
-        tr.querySelector("[data-approve]") && (tr.querySelector("[data-approve]").onclick = () => post({ status: "visible", note: "" }, "Approved. The poster has been told."));
-        tr.querySelector("[data-reject]") && (tr.querySelector("[data-reject]").onclick = async () => {
-          const r = await dialog({ title: "Reject this home?", body: `<p class="hint">The poster gets a notification with your reason and can fix it and send it again.</p>`, fields: [{ name: "note", label: "Reason (the poster sees this)", required: true, placeholder: "e.g. no real photos, price looks wrong, no landlord consent to sublet" }], confirm: "Reject" });
+        const on = (sel, fn) => { const b = tr.querySelector(sel); if (b) b.onclick = fn; };
+        const post = async (body, msg) => { try { await api("POST", `/api/admin/listings/${enc(id)}`, body); toast(msg); load(); refreshCounts(); } catch (e) { toast(e.message); } };
+        on("[data-approve]", () => post({ status: "visible", note: "" }, "Approved. The poster has been told."));
+        on("[data-reject]", async () => {
+          const r = await dialog({ title: "Reject this home?", body: `<p class="hint">The poster gets your reason and can fix it and send it again. If they paid for a pin, it's refunded.</p>`, fields: [{ name: "note", label: "Reason (the poster sees this)", required: true, placeholder: "e.g. fewer than 3 real photos, price looks wrong, no move-in date" }], confirm: "Reject" });
           if (r) post({ status: "rejected", note: r.note, reason: r.note }, "Rejected. The poster has been told.");
         });
-        tr.querySelector("[data-hide]") && (tr.querySelector("[data-hide]").onclick = async () => {
+        on("[data-hide]", async () => {
           const r = await dialog({ title: "Take this home down?", body: `<p class="hint">Nobody else will see it; the poster is told why. You can put it live again anytime.</p>`, fields: [{ name: "note", label: "Reason (the poster sees this)", required: true, placeholder: "e.g. looks like a scam, photos don't match, already rented" }], confirm: "Take down" });
           if (r) post({ status: "hidden", note: r.note, reason: r.note }, "Taken down");
         });
-        tr.querySelector("[data-show]") && (tr.querySelector("[data-show]").onclick = () => post({ status: "visible", note: "" }, "Live again"));
-        tr.querySelector("[data-feat]") && (tr.querySelector("[data-feat]").onchange = (e) => post({ featured: e.target.value || null }, "Featured updated"));
-        tr.querySelector("[data-del]") && (tr.querySelector("[data-del]").onclick = async () => {
+        on("[data-show]", () => post({ status: "visible", note: "", restore: true }, "Live again"));
+        on("[data-pin]", async () => {
+          const r = await dialog({ title: "Pin this home for free", body: `<p class="hint">Pinned homes show before the others and don't expire while pinned. No payment is taken.</p>`, fields: [{ name: "days", label: "Days", type: "number", required: true, value: "30" }], confirm: "Pin" });
+          if (!r) return;
+          const days = Number(r.days);
+          if (!(days > 0)) return toast("Enter a number of days");
+          try { await api("POST", `/api/admin/listings/${enc(id)}/pin`, { days }); toast(`Pinned for ${plural(days, "day")}`); load(); } catch (e) { toast(e.message); }
+        });
+        on("[data-unpin]", async () => {
+          if (!(await dialog({ title: "Unpin this home?", body: `<p class="hint">It goes back to the normal order. Its 60-day expiry counts again.</p>`, confirm: "Unpin" }))) return;
+          try { await api("DELETE", `/api/admin/listings/${enc(id)}/pin`); toast("Unpinned"); load(); } catch (e) { toast(e.message); }
+        });
+        on("[data-del]", async () => {
           const r = await dialog({ title: "Delete this home?", body: `<p class="hint">It's removed from the poster's account and can't be restored.</p>`, fields: [{ name: "reason", label: "Reason", required: true }], confirm: "Delete", danger: true });
           if (!r) return;
-          try { await api("DELETE", `/api/admin/listings/${encodeURIComponent(id)}?reason=${encodeURIComponent(r.reason)}`); toast("Deleted"); load(); refreshCounts(); } catch (e) { toast(e.message); }
+          try { await api("DELETE", `/api/admin/listings/${enc(id)}?reason=${enc(r.reason)}`); toast("Deleted"); load(); refreshCounts(); } catch (e) { toast(e.message); }
         });
       });
     }
     await load();
   };
 
-  // Chats
-  let chatQuery = "";
+  // Chats: threads (direct / home inquiry / team) with their members. Older servers sent per-account conversations.
+  function normThread(c, people = {}) {
+    const members = (c.members || []).map((m) => (typeof m === "string" ? { id: m, ...(people[m] || {}) } : m));
+    return {
+      id: c.id, legacy: Boolean(c.accountId && !String(c.id).startsWith("th_")), accountId: c.accountId,
+      kind: c.kind || c.type || "direct", title: txt(c.title) || txt(c.listingTitle) || txt(c.teamName) || "",
+      members, count: count(c.messages ?? c.messageCount), last: c.lastAt ?? c.last ?? null, status: c.status || "active", owner: txt(c.owner), email: c.email,
+    };
+  }
+  const memberList = (t) => (t.members.length ? t.members.map((m) => `${esc(txt(m.name) || m.email || m.id)}${m.test ? " (test)" : ""}`).join(", ") : esc(t.owner || t.email || "—"));
+  let chatQuery = "", chatKind = "all";
   VIEWS.chats = async () => {
-    $("#main").innerHTML = `${page("Chats", "The list shows titles and counts only. Opening a chat needs a reason, which goes into the audit log.", `<input class="input" id="q" placeholder="Search user or chat partner" value="${esc(chatQuery)}">`)}
-      <div class="notice" style="margin-bottom:14px">Private messages are personal information under PIPEDA. Open them only for a report, fraud or a safety concern, and say in the privacy policy that ColivEase may review messages for those reasons.</div>
+    $("#main").innerHTML = `${page("Chats", "Direct chats, home inquiries and team chats. The list shows members and counts only.", `<input class="input" id="q" placeholder="Search a person, email or home" value="${esc(chatQuery)}">`)}
+      <div class="notice" style="margin-bottom:14px">Opening a chat is recorded in the audit log. Open chats only for a report, fraud or a safety concern; the privacy policy says staff may review chats for these reasons.</div>
+      <div class="chips">${[["all", "All"], ["direct", "Direct"], ["listing", "Home inquiries"], ["team", "Teams"]].map(([k, l]) => `<button class="chip ${k === chatKind ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
       <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
+    $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { chatKind = b.dataset.f; VIEWS.chats(); }));
     let timer;
     $("#q").oninput = (e) => { clearTimeout(timer); timer = setTimeout(() => { chatQuery = e.target.value; load(); }, 250); };
     async function load() {
-      const { conversations } = await api("GET", `/api/admin/conversations?q=${encodeURIComponent(chatQuery)}`);
-      $("#tbl").innerHTML = conversations.length
-        ? `<table><thead><tr><th>Account</th><th>Chat with</th><th>Type</th><th>Messages</th><th>Last message</th><th></th></tr></thead><tbody>${conversations
-            .map((c) => `<tr><td><b>${esc(c.owner || "")}</b><span class="sub">${esc(c.email)}</span></td><td>${esc(c.title)}</td><td><span class="tag">${KIND[c.type] || esc(c.type)}</span></td><td>${c.messages}</td><td>${ago(c.last)}</td><td><button class="btn small" data-a="${esc(c.accountId)}" data-c="${esc(c.id)}">Open</button></td></tr>`)
+      const r = await api("GET", `/api/admin/conversations?q=${enc(chatQuery)}${"all" === chatKind ? "" : `&kind=${chatKind}`}`);
+      const list = (r.threads || r.conversations || []).map((c) => normThread(c, r.people || {})).filter((t) => "all" === chatKind || t.kind === chatKind);
+      $("#tbl").innerHTML = list.length
+        ? `<table><thead><tr><th>Type</th><th>Members</th><th>About</th><th>Messages</th><th>Last message</th><th></th></tr></thead><tbody>${list
+            .map((t) => `<tr><td><span class="tag">${KIND[t.kind] || esc(t.kind)}</span>${"requested" === t.status ? `<span class="sub">Chat request</span>` : ""}</td><td>${memberList(t)}</td><td>${esc(t.title || "—")}</td><td>${t.count}</td><td>${ago(t.last)}</td><td><button class="btn small" data-c="${esc(t.id)}" data-a="${t.legacy ? esc(t.accountId) : ""}">Open</button></td></tr>`)
             .join("")}</tbody></table>`
         : `<div class="empty">No chats yet.</div>`;
-      $("#tbl").querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => openChat(b.dataset.a, b.dataset.c)));
+      $("#tbl").querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => openChat(b.dataset.c, b.dataset.a || null)));
     }
     await load();
   };
-  async function openChat(accountId, convId, reason) {
+  async function openChat(threadId, accountId, reason) {
     if (!reason) {
-      const r = await dialog({ title: "Open this chat", body: `<p class="hint">This is recorded in the audit log. Say why you need to read it.</p>`, fields: [{ name: "reason", label: "Reason", required: true, minlength: 4, placeholder: "e.g. reviewing report #… / scam investigation" }], confirm: "Open" });
+      const r = await dialog({ title: "Open this chat", body: `<div class="notice">Opening a chat is recorded in the audit log.</div><p class="hint" style="margin-top:10px">Say why you need to read it.</p>`, fields: [{ name: "reason", label: "Reason", required: true, minlength: 4, placeholder: "e.g. reviewing a report / scam investigation" }], confirm: "Open" });
       if (!r) return;
       reason = r.reason;
     }
+    const base = accountId ? `/api/admin/conversations/${enc(accountId)}/${enc(threadId)}` : `/api/admin/conversations/${enc(threadId)}`;
     let c;
-    try { c = await api("GET", `/api/admin/conversations/${encodeURIComponent(accountId)}/${encodeURIComponent(convId)}?reason=${encodeURIComponent(reason)}`); } catch (e) { return toast(e.message); }
-    const el = drawer(`<div><h3>${esc(c.title)}</h3><p class="hint">${KIND[c.type] || "Chat"} of ${esc(c.email)} · ${plural(c.messages.length, "message")} · reason: ${esc(reason)}</p></div>
-      <div class="msgs">${c.messages.map((m) => `<div class="msg ${m.from === "me" ? "me" : m.from === "system" ? "system" : ""} ${can("chats.write") && m.from !== "system" ? "can-del" : ""}">${m.kind === "text" || m.kind === "system" ? esc(m.text) : `<i>[${esc(m.kind)}]</i> ${esc(m.text)}`}<small>${m.from === "me" ? "Account owner" : m.from === "system" ? "" : esc(m.from)} · ${fmt(m.ts)}</small>${can("chats.write") && m.from !== "system" ? `<button class="btn small danger del" data-m="${esc(m.id)}" title="Delete this message">Delete</button>` : ""}</div>`).join("") || `<p class="hint">No messages.</p>`}</div>`);
+    try { c = await api("GET", `${base}?reason=${enc(reason)}`); } catch (e) { return toast(e.message); }
+    const people = c.people || {};
+    const t = normThread({ ...(c.thread || c), messages: undefined }, people);
+    const msgs = c.messages || c.thread?.messages || [];
+    const canDel = can("chats.write") || can("reports.write");
+    const who = (from) => ("me" === from ? `Account owner (${esc(c.email || "")})` : "system" === from ? "" : esc(txt(people[from]?.name) || people[from]?.email || from));
+    const el = drawer(`<div><h3>${esc(t.title || KIND[t.kind] || "Chat")}</h3><p class="hint">${KIND[t.kind] || "Chat"} · ${plural(msgs.length, "message")} · reason: ${esc(reason)}</p>
+        ${t.members.length ? `<div class="row" style="margin-top:6px">${t.members.map((m) => `<button class="btn small" data-acct="${esc(m.id)}">${esc(txt(m.name) || m.email || m.id)}</button>`).join("")}</div>` : ""}</div>
+      <div class="notice blue">This opening was recorded in the audit log.</div>
+      <div class="msgs">${msgs.map((m) => `<div class="msg ${"me" === m.from ? "me" : "system" === m.from || "system" === m.kind ? "system" : ""} ${canDel && "system" !== m.from ? "can-del" : ""}">${"text" === (m.kind || "text") || "system" === m.kind ? esc(txt(m.text)) : `<i>[${esc(m.kind)}]</i> ${esc(txt(m.text))}`}<small>${who(m.from)}${"system" === m.from ? "" : " · "}${fmt(m.at ?? m.ts)}</small>${canDel && "system" !== m.from ? `<button class="btn small danger del" data-m="${esc(m.id)}" title="Delete this message">Delete</button>` : ""}</div>`).join("") || `<p class="hint">No messages.</p>`}</div>`);
+    el.querySelectorAll("[data-acct]").forEach((b) => (b.onclick = () => (can("users.read") ? openAccount(rawId(b.dataset.acct)) : null)));
     el.querySelectorAll("[data-m]").forEach((b) => (b.onclick = async () => {
       const r = await dialog({ title: "Delete this message?", fields: [{ name: "reason", label: "Reason", required: true }], confirm: "Delete", danger: true });
       if (!r) return;
-      try { await api("DELETE", `/api/admin/conversations/${encodeURIComponent(accountId)}/${encodeURIComponent(convId)}/messages/${encodeURIComponent(b.dataset.m)}?reason=${encodeURIComponent(r.reason)}`); toast("Deleted"); openChat(accountId, convId, reason); } catch (e) { toast(e.message); }
+      try { await api("DELETE", `${base}/messages/${enc(b.dataset.m)}?reason=${enc(r.reason)}`); toast("Deleted"); openChat(threadId, accountId, reason); } catch (e) { toast(e.message); }
     }));
   }
 
-  // Reports
+  // Reports: 3 different reporters hide a person / home / message / team until staff decide; the server tells the
+  // reporters the outcome.
   let reportStatus = "open";
   const RSTAT = { open: ["Open", "red"], reviewing: ["In review", "amber"], resolved: ["Resolved", "green"], dismissed: ["Dismissed", ""] };
+  const REASON = { scam: "Scam", fake: "Fake home", harassment: "Harassment", discrimination: "Discrimination", other: "Other" };
+  const RKIND = { person: "Person", listing: "Home", message: "Message", team: "Team" };
+  const OUTCOME = { keep: "Kept hidden", restore: "Restored", suspend: "Account suspended" };
+  const RESOLVE = {
+    keep: { title: "Keep it hidden?", hint: "It stays hidden for good. The people who reported it are told.", confirm: "Keep hidden", status: "resolved" },
+    restore: { title: "Restore it?", hint: "Nothing wrong found: it becomes visible again. The people who reported it are told.", confirm: "Restore", status: "resolved" },
+    suspend: { title: "Suspend the account behind it?", hint: "The account is suspended and signed out, and its content stays hidden. The people who reported it are told.", confirm: "Suspend", status: "resolved", danger: true },
+  };
+  async function resolveReport(id, extra, action) {
+    const R = RESOLVE[action];
+    const r = await dialog({ title: R.title, body: `<p class="hint">${R.hint}</p>`, fields: [{ name: "note", label: "Note (sent to the reporters)", type: "textarea", placeholder: "Optional" }], confirm: R.confirm, danger: R.danger });
+    if (!r) return;
+    if (!id) return toast("The server didn't send a report id for this item.");
+    try { await api("POST", `/api/admin/reports/${enc(id)}`, { ...extra, status: R.status, action, note: r.note }); toast("Done. The reporters will be told."); VIEWS.reports(); refreshCounts(); } catch (e) { toast(e.message); }
+  }
   VIEWS.reports = async () => {
-    $("#main").innerHTML = `${page("Reports", "What users reported, and what was done about it")}
+    $("#main").innerHTML = `${page("Reports", "When 3 different people report the same person, home, message or team, it's hidden automatically until you decide. The people who reported it are told the outcome.")}
       <div class="chips">${[["open", "Open"], ["reviewing", "In review"], ["resolved", "Resolved"], ["dismissed", "Dismissed"], ["all", "All"]].map(([k, l]) => `<button class="chip ${k === reportStatus ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
+      <div id="auto"></div>
       <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
     $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { reportStatus = b.dataset.f; VIEWS.reports(); }));
-    const { reports } = await api("GET", `/api/admin/reports?status=${reportStatus}`);
+    const res = await api("GET", `/api/admin/reports?status=${reportStatus}`);
+    const reports = (res.reports || []).map((r) => ({ ...r, kind: r.kind || r.about?.kind, about: r.about || { id: r.targetId, name: r.targetName || r.targetId }, reporter: r.reporter || {} }));
+    // Hidden items: from the server, or grouped here from the reports marked autoHidden.
+    let hidden = res.autoHidden || res.hidden;
+    if (!Array.isArray(hidden)) {
+      const groups = new Map();
+      for (const r of reports.filter((x) => x.autoHidden && ["open", "reviewing"].includes(x.status || "open"))) {
+        const k = `${r.kind}:${r.targetId || r.about.id}`;
+        const g = groups.get(k) || { id: r.id, kind: r.kind, targetId: r.targetId || r.about.id, name: r.about.name, reporters: new Set(), reasons: new Set(), at: r.at };
+        g.reporters.add(r.reporter.id);
+        g.reasons.add(r.reason);
+        groups.set(k, g);
+      }
+      hidden = [...groups.values()].map((g) => ({ ...g, reporters: g.reporters.size, reasons: [...g.reasons] }));
+    }
+    hidden = hidden.map((h) => ({ ...h, id: h.id || h.reportId || h.reportIds?.[0], name: txt(h.name) || txt(h.title) || h.targetId, reporters: count(h.reporters ?? h.reporterCount), reasons: h.reasons || [] }));
+    const w = can("reports.write");
+    $("#auto").innerHTML = hidden.length
+      ? `<div class="card panel" style="margin-bottom:14px"><h3>Hidden automatically (${hidden.length})</h3><p class="hint" style="margin:-6px 0 12px">3 or more different people reported these. They stay hidden until you decide.</p><div class="list">${hidden
+          .map((h, i) => `<div class="item"><div><span class="tag red">${esc(RKIND[h.kind] || h.kind || "Item")}</span> <b>${esc(h.name)}</b><span class="sub">${plural(h.reporters, "person", "people")} reported · ${esc(h.reasons.map((x) => REASON[x] || x).join(", ") || "—")} · ${ago(h.at ?? h.since)}</span></div>${w ? `<div class="row"><button class="btn small" data-res="${i}" data-act="keep">Keep hidden</button><button class="btn small primary" data-res="${i}" data-act="restore">Restore</button><button class="btn small danger" data-res="${i}" data-act="suspend">Suspend</button></div>` : ""}</div>`)
+          .join("")}</div></div>`
+      : "";
+    $("#auto").querySelectorAll("[data-res]").forEach((b) => (b.onclick = () => { const h = hidden[b.dataset.res]; resolveReport(h.id, { kind: h.kind, targetId: h.targetId }, b.dataset.act); }));
+    const outcome = (r) => { const o = r.resolution || {}; const act = o.action || r.action; const note = o.note ?? r.staffNote ?? (r.details != null ? r.note : null); return [OUTCOME[act], note, o.by || r.handledBy].filter(Boolean).map(esc).join(" · "); };
     $("#tbl").innerHTML = reports.length
       ? `<table><thead><tr><th>Reported by</th><th>About</th><th>Reason</th><th>When</th><th>Status</th><th></th></tr></thead><tbody>${reports
-          .map((r) => `<tr data-id="${esc(r.id)}"><td><b>${esc(r.reporter.name || "")}</b><span class="sub">${esc(r.reporter.email)}</span></td><td>${esc(r.about.name)}</td><td><b>${esc(r.reason)}</b><span class="sub">${esc(r.details)}</span></td><td>${fmt(r.at)}</td><td><span class="tag ${RSTAT[r.status]?.[1] || ""}">${RSTAT[r.status]?.[0] || r.status}</span>${r.note ? `<span class="sub">${esc(r.note)}${r.handledBy ? ` · ${esc(r.handledBy)}` : ""}</span>` : ""}</td><td><div class="row"><button class="btn small" data-who="${esc(r.reporter.id)}">Reporter</button>${can("reports.write") ? `<button class="btn small primary" data-handle>Handle</button>` : ""}</div></td></tr>`)
+          .map((r) => `<tr data-id="${esc(r.id)}"><td><b>${esc(txt(r.reporter.name) || "")}</b><span class="sub">${esc(r.reporter.email || r.reporter.id || "")}</span></td><td>${r.kind ? `<span class="tag">${esc(RKIND[r.kind] || r.kind)}</span> ` : ""}${esc(txt(r.about.name) || r.about.id || "—")}${r.autoHidden ? `<span class="sub"><span class="tag red">Hidden by reports</span></span>` : ""}${r.reporters ? `<span class="sub">${plural(count(r.reporters), "reporter")} in total</span>` : ""}</td><td><b>${esc(REASON[r.reason] || r.reason)}</b><span class="sub">${esc(r.details ?? r.note ?? "")}</span></td><td>${fmt(r.at)}</td><td><span class="tag ${RSTAT[r.status]?.[1] || ""}">${RSTAT[r.status]?.[0] || esc(r.status || "Open")}</span>${outcome(r) ? `<span class="sub">${outcome(r)}</span>` : ""}</td><td><div class="row">${r.reporter.id && can("users.read") ? `<button class="btn small" data-who="${esc(r.reporter.id)}">Reporter</button>` : ""}${w ? `<button class="btn small primary" data-handle>Handle</button>` : ""}</div></td></tr>`)
           .join("")}</tbody></table>`
-      : `<div class="empty">No ${reportStatus === "all" ? "" : (RSTAT[reportStatus]?.[0] || "").toLowerCase() + " "}reports.</div>`;
-    $("#tbl").querySelectorAll("[data-who]").forEach((b) => (b.onclick = () => openAccount(b.dataset.who)));
+      : `<div class="empty">No ${"all" === reportStatus ? "" : (RSTAT[reportStatus]?.[0] || "").toLowerCase() + " "}reports.</div>`;
+    $("#tbl").querySelectorAll("[data-who]").forEach((b) => (b.onclick = () => openAccount(rawId(b.dataset.who))));
     $("#tbl").querySelectorAll("[data-handle]").forEach((b) => (b.onclick = async () => {
-      const id = b.closest("tr").dataset.id;
-      const r = await dialog({ title: "Handle this report", body: `<label class="field">Outcome<select class="input" name="status"><option value="reviewing">In review</option><option value="resolved">Resolved</option><option value="dismissed">Dismissed</option><option value="open">Reopen</option></select></label>`, fields: [{ name: "note", label: "What was done", type: "textarea", placeholder: "e.g. suspended the other account / not enough evidence" }], confirm: "Save" });
+      const row = reports.find((x) => String(x.id) === b.closest("tr").dataset.id) || {};
+      const r = await dialog({ title: "Handle this report", body: `<label class="field">Outcome<select class="input" name="outcome"><option value="keep">Something was wrong: keep it hidden / take it down</option><option value="restore">Nothing wrong: restore it</option><option value="suspend">Suspend the account behind it</option><option value="reviewing">Still looking (in review)</option><option value="dismissed">Dismiss</option><option value="open">Reopen</option></select></label><p class="hint">The reporter is told the outcome.</p>`, fields: [{ name: "note", label: "What was done (sent to the reporter)", type: "textarea", placeholder: "e.g. we removed the home / not enough evidence" }], confirm: "Save" });
       if (!r) return;
-      try { await api("POST", `/api/admin/reports/${encodeURIComponent(id)}`, r); toast("Saved"); VIEWS.reports(); refreshCounts(); } catch (e) { toast(e.message); }
+      const action = RESOLVE[r.outcome] ? r.outcome : undefined;
+      const body = { status: action ? "resolved" : r.outcome, ...(action ? { action } : {}), note: r.note, kind: row.kind, targetId: row.targetId || row.about?.id };
+      try { await api("POST", `/api/admin/reports/${enc(row.id)}`, body); toast("Saved. The reporter will be told."); VIEWS.reports(); refreshCounts(); } catch (e) { toast(e.message); }
     }));
   };
 
   // Settings
+  const PRICE_LABEL = [["gold", "Gold membership", "/ month"], ["diamond", "Diamond membership", "/ month"], ["agent5", "Agent plan, 5 homes", "/ month"], ["agent10", "Agent plan, 10 homes", "/ month"], ["pin", "Pin a home", "30 days"], ["verify", "Identity verification", "3 years"], ["invites10", "Invite pack", "10 invites"], ["leaseCheck", "AI lease check", "each"], ["contract", "Online contract", "each"]];
+  const SPEC_PRICES = { gold: 19.99, diamond: 29.99, pin: 49.99, verify: 9.99, agent5: 199.99, agent10: 299.99, invites10: 29.99, leaseCheck: 4.99, contract: 9.99, currency: "CAD", taxNote: "+13% HST" };
   VIEWS.settings = async () => {
     loading();
-    const s = await api("GET", "/api/admin/settings");
+    const [s, mine] = await Promise.all([api("GET", "/api/admin/settings"), ME?.prices ? Promise.resolve(ME) : api("GET", "/api/me").catch(() => ({}))]);
     const edit = can("settings.write");
     const a = s.announcement || {};
-    $("#main").innerHTML = `${page("Site settings", edit ? "Changes apply to the website and the apps as soon as you save." : "Your role can view these only.")}
+    const fromServer = s.prices || mine.prices;
+    const prices = fromServer || SPEC_PRICES;
+    const pay = s.payments || mine.payments || {};
+    $("#main").innerHTML = `${page("Site settings", edit ? "Changes apply to the website and the apps as soon as you save." : "You can view these only.")}
       <div class="grid2">
         <form class="card panel" id="ann" style="display:grid;gap:12px"><h3>Announcement banner</h3>
           <label class="toggle"><input type="checkbox" name="active" ${a.active ? "checked" : ""} ${edit ? "" : "disabled"}>Show the banner</label>
@@ -699,12 +971,20 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
           <label class="toggle"><input type="checkbox" name="listingApproval" ${s.listingApproval !== false ? "checked" : ""} ${edit ? "" : "disabled"}>New homes need approval before they go live</label>
           <label class="toggle"><input type="checkbox" name="signupsOpen" ${s.signupsOpen !== false ? "checked" : ""} ${edit ? "" : "disabled"}>New sign-ups open</label>
           <label class="toggle"><input type="checkbox" name="maintenance" ${s.maintenance ? "checked" : ""} ${edit ? "" : "disabled"}>Maintenance mode (the app shows a maintenance notice)</label>
-          <label class="toggle"><input type="checkbox" name="safetyMembersOnly" ${s.safetyMembersOnly !== false ? "checked" : ""} ${edit ? "" : "disabled"}>Neighbourhood safety data for members only</label>
+          <span class="hint">Neighbourhood safety info is free for everyone, signed in or not.</span>
           ${edit ? `<div><button class="btn primary">Save switches</button></div>` : ""}
         </form>
+        <div class="card panel" style="display:grid;gap:12px;align-content:start"><h3>Payments</h3>
+          <span class="row" style="gap:8px"><span class="dot ${pay.ready ? "on" : "off"}"></span>${pay.ready ? "Payments: connected (RevenueCat / Stripe)" : "Payments: not connected (RevenueCat/Stripe)"}</span>
+          <span class="hint">${pay.ready ? "Web checkout (Stripe) and in-app purchases (Apple, Google) update plans through RevenueCat." : "Add the REVENUECAT_* and STRIPE_* secrets to the api function. Until then buyers see “Payments open soon”; you can still give anything for free from Users."}</span>
+        </div>
+        <div class="card panel" style="display:grid;gap:10px;align-content:start"><h3>Prices</h3>
+          <div class="kv">${PRICE_LABEL.map(([k, l, per]) => `<span>${l}</span><span><b>$${esc(Number(prices[k] ?? SPEC_PRICES[k]).toFixed(2))}</b> <span class="hint">${esc(prices.currency || "CAD")} ${per}</span></span>`).join("")}</div>
+          <span class="hint">${esc(prices.taxNote || "+13% HST")}. Read-only: prices are set on the server${fromServer ? "" : " (the server didn't send them, so these are the planned prices)"}.</span>
+        </div>
         <form class="card panel" id="avatars" style="display:grid;gap:12px"><h3>Comic avatars (Gemini)</h3>
           <span class="row" style="gap:8px"><span class="dot ${s.avatarStatus?.ready ? "on" : "off"}"></span>${s.avatarStatus?.ready ? `Connected · ${esc(s.avatarStatus.model)}` : "Not connected: add the GEMINI_API_KEY secret to the api function"}</span>
-          <span class="hint">Today: ${s.avatarStatus?.site ?? 0} made by ${plural(s.avatarStatus?.people ?? 0, "person", "people")}. Every avatar is a paid Gemini call; these limits cap the cost.</span>
+          <span class="hint">Today: ${esc(s.avatarStatus?.site ?? 0)} made by ${plural(s.avatarStatus?.people ?? 0, "person", "people")}. Every avatar is a paid Gemini call; these limits cap the cost.</span>
           <label class="toggle"><input type="checkbox" name="avatarEnabled" ${s.avatarEnabled !== false ? "checked" : ""} ${edit ? "" : "disabled"}>Turn photos into comic avatars</label>
           <div class="pair">
             <label class="field">Per signed-in person, per day<input class="input" type="number" min="0" max="50" name="avatarPerDay" value="${esc(s.avatarPerDay ?? 3)}" ${edit ? "" : "disabled"}></label>
@@ -728,7 +1008,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     $("#switches").onsubmit = async (e) => {
       e.preventDefault();
       const f = new FormData(e.target);
-      try { await api("PUT", "/api/admin/settings", { listingApproval: f.get("listingApproval") === "on", signupsOpen: f.get("signupsOpen") === "on", maintenance: f.get("maintenance") === "on", safetyMembersOnly: f.get("safetyMembersOnly") === "on" }); toast("Switches saved"); } catch (er) { toast(er.message); }
+      try { await api("PUT", "/api/admin/settings", { listingApproval: f.get("listingApproval") === "on", signupsOpen: f.get("signupsOpen") === "on", maintenance: f.get("maintenance") === "on" }); toast("Switches saved"); } catch (er) { toast(er.message); }
     };
   };
 
@@ -869,27 +1149,142 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     };
   }
 
-  // Admins
-  const PERMS = [["users.read", "See users"], ["users.suspend", "Suspend users"], ["users.write", "Edit users"], ["users.delete", "Delete users"], ["listings.read", "See homes"], ["listings.write", "Review homes"], ["chats.read", "Read chats"], ["chats.write", "Delete messages"], ["reports.write", "Handle reports"], ["plans.write", "Manage memberships"], ["settings.write", "Site settings"], ["broadcast", "Broadcast"], ["admins.write", "Manage admins"], ["audit.read", "Audit log"]];
-  VIEWS.admins = async () => {
+  // Staff & permissions: a checklist per person; templates fill it in one click, then fine-tune and save.
+  VIEWS.staff = async () => {
     loading();
-    const { admins, roles } = await api("GET", "/api/admin/admins");
-    const has = (role, p) => roles[role].includes(p) || (p === "users.suspend" && roles[role].includes("users.write"));
-    $("#main").innerHTML = `${page("Admins & roles", "Who can get in, and what they can do")}
-      <div class="grid2">
-        <div class="card panel"><h3>Admins</h3><div class="list">${admins.map((a) => `<div class="item"><div><b>${esc(a.email)}</b><span class="sub">${a.fixed ? "Owner (set on the server)" : `Added by ${esc(a.addedBy || "—")}`}</span></div><div class="row"><span class="tag amber">${ROLE[a.role] || a.role}</span>${!a.fixed && can("admins.write") ? `<button class="btn small danger" data-rm="${esc(a.accountId)}">Remove</button>` : ""}</div></div>`).join("")}</div>
-          ${can("admins.write") ? `<form id="add" class="row" style="margin-top:14px"><input class="input" name="email" type="email" required placeholder="Their ColivEase sign-in email" style="flex:1;min-width:200px"><select class="input" name="role" style="width:auto"><option value="admin">Admin</option><option value="moderator">Moderator</option><option value="support">Support (read-only)</option></select><button class="btn primary">Add</button></form><p class="hint">They need to have signed in to ColivEase with this email once.</p>` : ""}
-        </div>
-        <div class="card panel tablewrap"><h3>What each role can do</h3><table class="matrix"><thead><tr><th>Permission</th>${Object.keys(roles).map((r) => `<th>${ROLE[r]}</th>`).join("")}</tr></thead><tbody>${PERMS.map(([p, l]) => `<tr><td>${l}</td>${Object.keys(roles).map((r) => `<td>${has(r, p) ? "✓" : ""}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
-      </div>`;
-    $("#add") && ($("#add").onsubmit = async (e) => {
-      e.preventDefault();
-      try { await api("PUT", "/api/admin/admins", Object.fromEntries(new FormData(e.target))); toast("Added"); VIEWS.admins(); } catch (er) { toast(er.message); }
+    const r = await api("GET", "/api/admin/staff");
+    const T = r.templates && typeof r.templates === "object" ? { ...TEMPLATES, ...r.templates } : TEMPLATES;
+    const list = (r.staff || r.admins || []).map((s) => {
+      const owner = Boolean(s.owner || "owner" === s.role || s.fixed);
+      return { id: s.accountId || s.id, email: s.email || "", name: txt(s.name), owner, perms: owner ? ALL_PERMS : Array.isArray(s.perms) ? s.perms : T[s.role] || [], addedBy: s.addedBy, since: s.since || s.createdAt };
     });
-    $("#main").querySelectorAll("[data-rm]").forEach((b) => (b.onclick = async () => {
-      if (!(await dialog({ title: "Remove this admin?", confirm: "Remove", danger: true }))) return;
-      try { await api("DELETE", `/api/admin/admins/${encodeURIComponent(b.dataset.rm)}`); toast("Removed"); VIEWS.admins(); } catch (er) { toast(er.message); }
-    }));
+    const labelOf = (perms) => { const t = Object.keys(T).find((k) => T[k].length === perms.length && T[k].every((p) => perms.includes(p))); return t ? ROLE[t] : `Custom · ${plural(perms.length, "permission")}`; };
+    $("#main").innerHTML = `${page("Staff & permissions", "Who can get into the admin panel and what each person can do. Every staff action is recorded in the audit log.")}
+      <form class="card staff" id="add"><h3 style="margin:0">Add staff</h3>
+        <div class="row"><input class="input" name="email" type="email" required placeholder="Their ColivEase sign-in email" style="flex:1;min-width:220px"><select class="input" name="template" style="width:auto"><option value="support">Start as Support</option><option value="moderator">Start as Moderator</option><option value="admin">Start as Admin</option></select><button class="btn primary">Add</button></div>
+        <span class="hint">They need to have signed in to ColivEase with this email once. You can fine-tune their permissions below after adding.</span>
+      </form>
+      ${list.map((s, i) => `<div class="card staff" data-i="${i}">
+        <div class="staff-head"><div><b>${esc(s.email)}</b>${s.name ? ` <span class="hint">${esc(s.name)}</span>` : ""}<span class="hint" style="display:block">${s.owner ? "Owner: has every permission (set on the server)" : `<span data-label>${esc(labelOf(s.perms))}</span>${s.addedBy ? ` · added by ${esc(s.addedBy)}` : ""}${s.since ? ` · since ${day(s.since)}` : ""}`}</span></div>
+          ${s.owner ? `<span class="tag amber">Owner</span>` : `<div class="row"><span class="hint">Apply template</span>${Object.keys(T).map((t) => `<button type="button" class="btn small" data-tpl="${t}">${esc(ROLE[t] || t)}</button>`).join("")}${s.email.toLowerCase() === String(ME.email || "").toLowerCase() ? "" : `<button type="button" class="btn small danger" data-rm>Remove</button>`}</div>`}</div>
+        <div class="perms">${PERM_GROUPS.map(([g, perms]) => `<fieldset><legend>${esc(g.toUpperCase())}</legend>${perms.map(([p, l]) => `<label class="toggle"><input type="checkbox" data-p="${p}" ${s.perms.includes(p) ? "checked" : ""} ${s.owner ? "disabled" : ""}>${esc(l)}</label>`).join("")}</fieldset>`).join("")}</div>
+        ${s.owner ? "" : `<div class="row"><button type="button" class="btn small primary" data-save>Save permissions</button><span class="hint" data-state></span></div>`}
+      </div>`).join("") || `<div class="card empty">No staff yet.</div>`}`;
+    $("#add").onsubmit = async (e) => {
+      e.preventDefault();
+      const f = Object.fromEntries(new FormData(e.target));
+      try { await api("POST", "/api/admin/staff", { email: f.email.trim().toLowerCase(), template: f.template, perms: T[f.template] }); toast("Added. Fine-tune their permissions below."); VIEWS.staff(); } catch (er) { toast(er.message); }
+    };
+    $("#main").querySelectorAll(".staff[data-i]").forEach((card) => {
+      const s = list[card.dataset.i];
+      const picked = () => [...card.querySelectorAll("[data-p]")].filter((c) => c.checked).map((c) => c.dataset.p);
+      const dirty = () => { const st = card.querySelector("[data-state]"); if (st) st.textContent = "Not saved yet"; const lb = card.querySelector("[data-label]"); if (lb) lb.textContent = labelOf(picked()); };
+      card.querySelectorAll("[data-p]").forEach((c) => (c.onchange = dirty));
+      card.querySelectorAll("[data-tpl]").forEach((b) => (b.onclick = () => { card.querySelectorAll("[data-p]").forEach((c) => (c.checked = T[b.dataset.tpl].includes(c.dataset.p))); dirty(); }));
+      const save = card.querySelector("[data-save]");
+      if (save) save.onclick = async () => {
+        try { await api("PUT", "/api/admin/staff", { email: s.email, accountId: s.id, perms: picked() }); toast(`Saved permissions for ${s.email}`); card.querySelector("[data-state]").textContent = "Saved"; } catch (er) { toast(er.message); }
+      };
+      const rm = card.querySelector("[data-rm]");
+      if (rm) rm.onclick = async () => {
+        if (!(await dialog({ title: "Remove this staff member?", body: `<p class="hint">${esc(s.email)} loses access to the admin panel right away. Their ColivEase account stays.</p>`, confirm: "Remove", danger: true }))) return;
+        try { await api("DELETE", `/api/admin/staff?email=${enc(s.email)}`, { email: s.email, accountId: s.id }); toast("Removed"); VIEWS.staff(); } catch (er) { toast(er.message); }
+      };
+    });
+  };
+
+  // Test accounts: made in bulk, invisible to real accounts, and usable through "Open as this account".
+  VIEWS.testers = async () => {
+    $("#main").innerHTML = `${page("Test accounts", "Test accounts are only visible to other test accounts and staff.")}
+      <form class="card panel" id="mk" style="display:grid;gap:12px;margin-bottom:14px"><h3 style="margin:0">Create test accounts</h3>
+        <div class="row" style="align-items:flex-end">
+          <label class="field">How many<input class="input sm num" name="count" type="number" min="1" max="50" value="5" required></label>
+          <label class="field">Name prefix<input class="input sm" name="namePrefix" value="Tester" maxlength="30" required style="width:180px"></label>
+          <label class="field">Kind<select class="input sm" name="kind"><option value="member">Member</option><option value="agent">Agent</option></select></label>
+          <button class="btn primary">Create</button>
+        </div>
+        <span class="hint">No real email needed. They look exactly like normal accounts; their people and homes are hidden from real accounts.</span>
+      </form>
+      <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
+    $("#mk").onsubmit = async (e) => {
+      e.preventDefault();
+      const f = Object.fromEntries(new FormData(e.target));
+      const n = Math.max(1, Math.min(50, Number(f.count) || 1));
+      const btn = e.target.querySelector("button");
+      btn.disabled = true;
+      try { const r = await api("POST", "/api/admin/testers", { count: n, namePrefix: f.namePrefix.trim() || "Tester", kind: f.kind }); toast(`Created ${plural(count(r.created ?? r.testers ?? r.accounts) || r.count || n, "test account")}`); load(); } catch (er) { toast(er.message); } finally { btn.disabled = false; }
+    };
+    async function load() {
+      const r = await api("GET", "/api/admin/testers");
+      const list = r.testers || r.accounts || [];
+      const g = can("plans.grant"), b = can("badges.grant");
+      $("#tbl").innerHTML = list.length
+        ? `<table><thead><tr><th>Test account</th><th>Kind</th><th>Created</th><th>Plan</th><th>Homes</th><th></th></tr></thead><tbody>${list
+            .map((t, i) => {
+              const e = t.entitlements || {};
+              const plan = t.agentPlan || e.agentPlan;
+              return `<tr data-i="${i}"><td><b>${esc(txt(t.name) || "(no name)")}</b><span class="sub">${esc(t.email || t.id)}</span></td><td>${"agent" === t.kind ? `<span class="tag amber">Agent</span>` : `<span class="tag">Member</span>`}</td><td>${day(t.createdAt)}</td><td><div class="tags">${tierTag(tierOf(t)) || ""}${PLAN[plan] ? `<span class="tag green">${PLAN[plan]}</span>` : ""}${TIER[tierOf(t)] || PLAN[plan] ? "" : "Free"}</div></td><td>${count(t.listings ?? t.liveListings ?? e.liveListings)}</td><td><div class="row"><button class="btn small primary" data-act>Open as this account</button>${
+                g ? ("agent" === t.kind ? `<button class="btn small" data-g='{"agentPlan":"agent10","agentDays":30}' data-msg="Agent 10 plan for 30 days">Agent 10 · 30 d</button>` : `<button class="btn small" data-g='{"tier":"gold","tierDays":30}' data-msg="Gold for 30 days">Gold 30 d</button><button class="btn small" data-g='{"tier":"diamond","tierDays":30}' data-msg="Diamond for 30 days">Diamond 30 d</button>`) : ""}${
+                b ? `<button class="btn small" data-g='{"verifiedYears":3}' data-msg="Verified for 3 years">Verified</button>` : ""}${
+                can("users.read") ? `<button class="btn small ghost" data-open>Manage</button>` : ""}</div></td></tr>`;
+            })
+            .join("")}</tbody></table>`
+        : `<div class="empty">No test accounts yet. Create some above.</div>`;
+      $("#tbl").querySelectorAll("tr[data-i]").forEach((tr) => {
+        const t = list[tr.dataset.i];
+        tr.querySelector("[data-act]").onclick = () => actAs(t.id);
+        tr.querySelectorAll("[data-g]").forEach((btn) => (btn.onclick = async () => { if (await grantTo(t.id, JSON.parse(btn.dataset.g), `${btn.dataset.msg}: given`)) load(); }));
+        const o = tr.querySelector("[data-open]");
+        if (o) o.onclick = () => openAccount(t.id);
+      });
+    }
+    await load();
+  };
+
+  // Agent applications: RECO number + brokerage + Stripe ID check; staff look the number up on RECO's register.
+  let agentStatus = "pending";
+  const ASTAT = { pending: ["Waiting", "amber"], approved: ["Approved", "green"], rejected: ["Rejected", "red"] };
+  const idState = (a) => {
+    const v = a.identity ?? a.identityStatus ?? a.verified?.identity ?? a.entitlements?.verified?.identity;
+    return true === v || "verified" === v ? ["ID verified", "green"] : ["pending", "processing", "requires_input"].includes(v) ? ["ID check in progress", "amber"] : ["failed", "rejected", "canceled"].includes(v) ? ["ID check failed", "red"] : ["ID not verified", ""];
+  };
+  VIEWS.agents = async () => {
+    $("#main").innerHTML = `${page("Agent applications", "Agents send their full name, RECO registration number and brokerage, and verify their ID with Stripe. Look the number up on RECO's public register, then approve to give the licensed agent badge.")}
+      <div class="chips">${[["pending", "Waiting"], ["approved", "Approved"], ["rejected", "Rejected"], ["all", "All"]].map(([k, l]) => `<button class="chip ${k === agentStatus ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
+      <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
+    $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { agentStatus = b.dataset.f; VIEWS.agents(); }));
+    const r = await api("GET", `/api/admin/agents?status=${agentStatus}`);
+    const list = (r.applications || r.agents || []).filter((a) => "all" === agentStatus || (a.status || "pending") === agentStatus);
+    $("#tbl").innerHTML = list.length
+      ? `<table><thead><tr><th>Applicant</th><th>RECO number</th><th>Brokerage</th><th>Identity</th><th>Applied</th><th>Status</th><th></th></tr></thead><tbody>${list
+          .map((a, i) => {
+            const [idText, idTone] = idState(a);
+            const st = a.status || "pending";
+            return `<tr data-i="${i}"><td><b>${esc(a.fullName || txt(a.name) || "(no name)")}</b><span class="sub">${esc(a.email || a.accountId || "")}</span></td><td><b>${esc(a.reco || "—")}</b><span class="sub"><a href="https://registrantsearch.reco.on.ca/" target="_blank" rel="noopener">Look up on RECO</a>${a.reco ? ` · <a href="#" data-copy>Copy</a>` : ""}</span></td><td>${esc(a.brokerage || "—")}</td><td><span class="tag ${idTone}">${idText}</span></td><td>${fmt(a.at ?? a.createdAt)}</td><td><span class="tag ${ASTAT[st]?.[1] || ""}">${ASTAT[st]?.[0] || esc(st)}</span>${a.note ? `<span class="sub">${esc(a.note)}</span>` : ""}${a.decidedBy ? `<span class="sub">by ${esc(a.decidedBy)}</span>` : ""}</td><td><div class="row">${"approved" !== st ? `<button class="btn small primary" data-yes>Approve</button>` : ""}${"rejected" !== st ? `<button class="btn small" data-no>Reject</button>` : ""}${a.accountId && can("users.read") ? `<button class="btn small ghost" data-open>Account</button>` : ""}</div></td></tr>`;
+          })
+          .join("")}</tbody></table>`
+      : `<div class="empty">No ${"all" === agentStatus ? "" : (ASTAT[agentStatus]?.[0] || "").toLowerCase() + " "}applications.</div>`;
+    $("#tbl").querySelectorAll("tr[data-i]").forEach((tr) => {
+      const a = list[tr.dataset.i];
+      const id = a.id || a.accountId;
+      const decide = async (approve) => {
+        const idOk = "green" === idState(a)[1];
+        const r2 = await dialog({
+          title: approve ? `Approve ${a.fullName || "this agent"}?` : `Reject ${a.fullName || "this application"}?`,
+          body: approve ? `<p class="hint">They get the licensed agent badge and can buy an agent plan to post homes.</p>${idOk ? "" : `<div class="notice">Their Stripe ID check isn't complete.</div>`}` : `<p class="hint">They're told with your note and can apply again.</p>`,
+          fields: [{ name: "note", label: approve ? "Note (optional)" : "Reason (the agent sees this)", type: "textarea", required: !approve, placeholder: approve ? "e.g. RECO registration checked" : "e.g. RECO number doesn't match the name" }],
+          confirm: approve ? "Approve" : "Reject",
+          danger: !approve,
+        });
+        if (!r2) return;
+        try { await api("POST", `/api/admin/agents/${enc(id)}/decision`, { approve, note: r2.note }); toast(approve ? "Approved. The agent has been told." : "Rejected. The agent has been told."); VIEWS.agents(); refreshCounts(); } catch (e) { toast(e.message); }
+      };
+      const on = (sel, fn) => { const b = tr.querySelector(sel); if (b) b.onclick = fn; };
+      on("[data-yes]", () => decide(true));
+      on("[data-no]", () => decide(false));
+      on("[data-open]", () => openAccount(a.accountId));
+      on("[data-copy]", (e) => { e.preventDefault(); navigator.clipboard?.writeText(a.reco).then(() => toast("RECO number copied"), () => toast(a.reco)); });
+    });
   };
 
   // Audit log
