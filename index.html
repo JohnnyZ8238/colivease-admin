@@ -250,7 +250,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   const PERM_GROUPS = [
     ["Users", [["users.read", "See users"], ["users.write", "Edit users and notes"], ["users.suspend", "Suspend and sign out"], ["users.delete", "Delete accounts"]]],
     ["Homes", [["listings.read", "See homes"], ["listings.review", "Approve, reject, take down"], ["listings.pin", "Pin homes for free"]]],
-    ["Plans & badges", [["plans.grant", "Give memberships, agent plans and credits"], ["badges.grant", "Give badges and verification"], ["agents.review", "Review agent applications"]]],
+    ["Plans & badges", [["plans.grant", "Give memberships, agent plans and credits"], ["badges.grant", "Give badges and verification"], ["agents.review", "Review agent and landlord applications"]]],
     ["Safety", [["chats.read", "Read chats (recorded)"], ["reports.read", "See reports"], ["reports.write", "Handle reports"]]],
     ["Site", [["settings.write", "Site settings"], ["notify.write", "Notification templates"], ["broadcast", "Send broadcasts"]]],
     ["Team", [["staff.write", "Manage staff"], ["testers.write", "Test accounts"], ["audit.read", "See the audit log"]]],
@@ -268,7 +268,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     "account.signout": "Signed out everywhere", "account.suspend": "Suspended account", "account.unsuspend": "Lifted suspension", "account.update": "Edited account", "account.plans": "Changed membership / mode", "account.delete": "Deleted account", "account.grant": "Gave a plan, badge or credits",
     "listing.update": "Changed home status", "listing.approve": "Approved home", "listing.reject": "Rejected home", "listing.delete": "Deleted home", "listing.pin": "Pinned a home", "listing.unpin": "Unpinned a home", "chat.read": "Read a chat", "chat.message.delete": "Deleted a message", "report.update": "Handled report", "report.resolve": "Resolved a report",
     "broadcast": "Sent a broadcast", "settings.update": "Changed site settings", "admin.set": "Set admin role", "admin.remove": "Removed admin", "staff.set": "Changed staff permissions", "staff.add": "Added staff", "staff.remove": "Removed staff",
-    "testers.create": "Created test accounts", "act-as": "Opened a test account", "act_as": "Opened a test account", "agent.approve": "Approved an agent", "agent.reject": "Rejected an agent", "agents.decision": "Decided an agent application",
+    "testers.create": "Created test accounts", "act-as": "Opened a test account", "act_as": "Opened a test account", "agent.approve": "Approved an agent", "agent.reject": "Rejected an agent", "landlord.approve": "Approved a landlord", "landlord.reject": "Rejected a landlord", "agents.decision": "Decided an agent application",
     "notify.template": "Edited a notification", "notify.template.reset": "Reset a notification",
   };
   const ICON = {
@@ -283,6 +283,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     admins: '<path d="M12 3l8 3v6c0 4.5-3.4 7.7-8 9-4.6-1.3-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
     audit: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
     testers: '<path d="M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 006 21h12a1.7 1.7 0 001.5-2.5L14 9V3"/><path d="M7.5 15h9"/>',
+    landlords: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
     agents: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.5c.5-1.6 1.7-2.5 3.2-2.5s2.7.9 3.2 2.5M14.5 10h4M14.5 13.5h3"/>',
     notifications: '<path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/>',
   };
@@ -495,6 +496,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     ["testers", "Test accounts", "testers.write"],
     ["listings", "Home review", "listings.read"],
     ["agents", "Agent applications", "agents.review"],
+    ["landlords", "Landlord applications", "agents.review"],
     ["chats", "Chats", "chats.read"],
     ["reports", "Reports", "reports.read"],
     ["members", "Memberships", "users.read"],
@@ -507,8 +509,9 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   let openReports = 0;
   let pendingHomes = 0;
   let pendingAgents = 0;
+  let pendingLandlords = 0;
   function renderNav() {
-    const badge = { reports: openReports, listings: pendingHomes, agents: pendingAgents };
+    const badge = { reports: openReports, listings: pendingHomes, agents: pendingAgents, landlords: pendingLandlords };
     $("#nav").innerHTML = SECTIONS.filter(([, , p]) => !p || can(p))
       .map(([key, label]) => `<button data-view="${key}" class="${key === view ? "on" : ""}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[key] || ICON.admins}</svg>${label}${badge[key] ? `<span class="count">${badge[key]}</span>` : ""}</button>`)
       .join("");
@@ -543,6 +546,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     openReports = o.openReports ?? 0;
     pendingHomes = o.pendingListings ?? o.pendingReviews ?? 0;
     pendingAgents = o.pendingAgents ?? o.pendingAgentApplications ?? 0;
+    pendingLandlords = o.pendingLandlords ?? 0;
     renderNav();
   }
   async function refreshCounts() {
@@ -569,6 +573,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       ["Live homes", n(o.liveListings), o.pinnedListings != null ? `${o.pinnedListings} pinned` : "visible right now", "listings"],
       ["Waiting for review", n(o.pendingListings ?? o.pendingReviews), "new homes to check", "listings"],
       ["Agent applications", n(o.pendingAgents ?? o.pendingAgentApplications), "waiting for a decision", "agents"],
+      ["Landlord applications", n(o.pendingLandlords), "answer within 48 hours", "landlords"],
       ["Open reports", n(o.openReports), o.autoHidden != null ? `${o.autoHidden} auto-hidden` : "not resolved yet", "reports"],
       ["Members", n(o.members), "Gold · Diamond", "members"],
       ["Suspended", n(o.suspended), "accounts", "accounts"],
@@ -1284,6 +1289,53 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       on("[data-no]", () => decide(false));
       on("[data-open]", () => openAccount(a.accountId));
       on("[data-copy]", (e) => { e.preventDefault(); navigator.clipboard?.writeText(a.reco).then(() => toast("RECO number copied"), () => toast(a.reco)); });
+    });
+  };
+
+  // Landlord applications: landlord mode is for approved hosts. Answer within 48 hours (the app promises it).
+  let landlordStatus = "pending";
+  const RELATION = { owner: "Owner", sublet: "Tenant subletting a room", manager: "Property manager" };
+  const DUE = 48 * 3600000;
+  const dueText = (a) => {
+    const left = (a.createdAt ?? a.at) + DUE - Date.now();
+    if (left <= 0) return ["Overdue", "red"];
+    const h = Math.ceil(left / 3600000);
+    return [`${h} h left`, h <= 12 ? "amber" : ""];
+  };
+  VIEWS.landlords = async () => {
+    $("#main").innerHTML = `${page("Landlord applications", "Renters apply to switch on landlord mode. Check who they are and how they're connected to the home (owner, tenant with the landlord's consent, or property manager), then approve to unlock landlord mode. The app tells them we answer within 48 hours.")}
+      <div class="chips">${[["pending", "Waiting"], ["approved", "Approved"], ["rejected", "Rejected"], ["all", "All"]].map(([k, l]) => `<button class="chip ${k === landlordStatus ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
+      <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
+    $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { landlordStatus = b.dataset.f; VIEWS.landlords(); }));
+    const r = await api("GET", "/api/admin/landlords");
+    const list = (r.applications || []).filter((a) => "all" === landlordStatus || (a.status || "pending") === landlordStatus);
+    $("#tbl").innerHTML = list.length
+      ? `<table><thead><tr><th>Applicant</th><th>Connection</th><th>Where</th><th>Identity</th><th>Applied</th><th>Status</th><th></th></tr></thead><tbody>${list
+          .map((a, i) => {
+            const [idText, idTone] = idState(a);
+            const st = a.status || "pending";
+            const [due, dueTone] = dueText(a);
+            return `<tr data-i="${i}"><td><b>${esc(a.fullName || "(no name)")}</b><span class="sub">${esc(a.email || a.accountId || "")}${a.phone ? ` · ${esc(a.phone)}` : ""}</span></td><td>${esc(RELATION[a.relation] || a.relation || "—")}<span class="sub">${plural(a.homes || 1, "home")}</span></td><td>${esc(a.area || "—")}${a.about ? `<span class="sub">${esc(a.about)}</span>` : ""}</td><td><span class="tag ${idTone}">${idText}</span>${a.phoneVerified ? `<span class="sub">Phone verified</span>` : ""}</td><td>${fmt(a.createdAt ?? a.at)}${"pending" === st ? `<span class="sub"><span class="tag ${dueTone}">${due}</span></span>` : ""}</td><td><span class="tag ${ASTAT[st]?.[1] || ""}">${ASTAT[st]?.[0] || esc(st)}</span>${a.note ? `<span class="sub">${esc(a.note)}</span>` : ""}</td><td><div class="row">${"approved" !== st ? `<button class="btn small primary" data-yes>Approve</button>` : ""}${"rejected" !== st ? `<button class="btn small" data-no>Reject</button>` : ""}${a.accountId && can("users.read") ? `<button class="btn small ghost" data-open>Account</button>` : ""}</div></td></tr>`;
+          })
+          .join("")}</tbody></table>`
+      : `<div class="empty">No ${"all" === landlordStatus ? "" : (ASTAT[landlordStatus]?.[0] || "").toLowerCase() + " "}applications.</div>`;
+    $("#tbl").querySelectorAll("tr[data-i]").forEach((tr) => {
+      const a = list[tr.dataset.i];
+      const decide = async (approve) => {
+        const r2 = await dialog({
+          title: approve ? `Approve ${a.fullName || "this landlord"}?` : `Reject ${a.fullName || "this application"}?`,
+          body: approve ? `<p class="hint">They can switch to landlord mode right away and get the landlord badge.</p>` : `<p class="hint">They're told with your note and can apply again.</p>`,
+          fields: [{ name: "note", label: approve ? "Note (optional)" : "Reason (they see this)", type: "textarea", required: !approve, placeholder: approve ? "e.g. Ownership checked" : "e.g. Please add the address of the home you rent out" }],
+          confirm: approve ? "Approve" : "Reject",
+          danger: !approve,
+        });
+        if (!r2) return;
+        try { await api("POST", `/api/admin/landlords/${enc(a.accountId)}/decision`, { approve, note: r2.note }); toast(approve ? "Approved. They've been told." : "Rejected. They've been told."); VIEWS.landlords(); refreshCounts(); } catch (e) { toast(e.message); }
+      };
+      const on = (sel, fn) => { const b = tr.querySelector(sel); if (b) b.onclick = fn; };
+      on("[data-yes]", () => decide(true));
+      on("[data-no]", () => decide(false));
+      on("[data-open]", () => openAccount(a.accountId));
     });
   };
 
