@@ -6,6 +6,8 @@
 <meta name="robots" content="noindex,nofollow">
 <title>ColivEase Admin</title>
 <link rel="icon" href="icon-192.png">
+<!-- Hidden until the script below has made sure the panel isn't inside a frame (GitHub Pages can't send frame headers). -->
+<style id="antiframe">html { display: none !important; }</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap">
@@ -180,6 +182,63 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
 .input.num { width: 84px; }
 .grant { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 16px; }
 .grant b { font-size: 13px; }
+/* selection + bulk actions */
+td.sel, th.sel { width: 36px; padding-right: 0; }
+td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue); }
+.bulkbar { position: sticky; top: 8px; z-index: 5; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 14px; margin-bottom: 12px; border-radius: 18px; background: var(--ink); color: #fff; box-shadow: var(--shadow); }
+.bulkbar b { margin-right: 6px; }
+.bulkbar .btn { height: 32px; padding: 0 12px; font-size: 12px; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.25); color: #fff; }
+.bulkbar .btn:hover { background: #fff; color: var(--ink); }
+.bulkbar .btn.danger { border-color: #FCA5A5; color: #FECACA; }
+.bulkbar .btn.danger:hover { background: var(--red); color: #fff; }
+.pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick label { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--white); font-size: 12.5px; font-weight: 500; cursor: pointer; }
+.pick input { accent-color: var(--blue); }
+.pick label:has(input:checked) { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px 16px; align-items: end; }
+/* multi-session console */
+.console { position: fixed; inset: 0; z-index: 25; background: #0B1530; display: grid; grid-template-rows: auto 1fr; }
+.console-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px 16px; background: var(--ink); color: #fff; }
+.console-head h3 { margin: 0 8px 0 0; font-size: 18px; color: #fff; }
+.console-head .btn { height: 32px; font-size: 12px; color: var(--ink); }
+.console-head .btn.primary { color: #fff; }
+.console-head .btn.danger { color: var(--red); }
+.console-head select { height: 32px; border-radius: 10px; border: 0; padding: 0 8px; }
+.console-grid { overflow: auto; display: grid; gap: 10px; padding: 10px; grid-template-columns: repeat(var(--cols, 3), minmax(300px, 1fr)); grid-auto-rows: minmax(560px, calc(100vh - 90px)); }
+.console-cell { display: grid; grid-template-rows: auto 1fr; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 10px 30px -12px rgba(0,0,0,.5); min-width: 0; }
+.console-cell header { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: #FEF3C7; border-bottom: 1px solid #F59E0B; font-size: 12px; min-width: 0; }
+.console-cell header b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.console-cell header .sp { flex: none; }
+.console-cell header .sp { margin-left: auto; display: flex; gap: 4px; }
+.console-cell header .btn { height: 26px; padding: 0 9px; font-size: 11px; }
+.console-cell iframe { width: 100%; height: 100%; border: 0; background: var(--bg); }
+.console-tabs { padding: 16px; color: #fff; overflow: auto; }
+.console-tabs .list .item { background: #fff; color: var(--ink); }
+@media (max-width: 700px) { .console-grid { grid-template-columns: 1fr; } }
+/* stress test */
+.kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+.kpi { padding: 14px; }
+.kpi small { color: var(--muted); font-weight: 500; }
+.kpi b { display: block; font: 700 24px var(--display); }
+.spark { width: 100%; height: 120px; display: block; }
+.spark .grid { stroke: var(--line); stroke-width: 1; }
+.spark .rps { fill: none; stroke: var(--blue); stroke-width: 2; }
+.spark .p95 { fill: none; stroke: #F59E0B; stroke-width: 2; }
+.spark .err { fill: var(--red); }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; margin-right: 5px; vertical-align: middle; }
+/* support messages */
+.inbox { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 14px; min-height: 560px; }
+.inbox .threads { overflow: auto; max-height: calc(100vh - 220px); padding: 8px; }
+.inbox .thread { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 10px 12px; border-radius: 14px; cursor: pointer; }
+.inbox .thread:hover { background: var(--soft); }
+.inbox .thread.on { background: var(--blue-soft); }
+.inbox .thread .sub { grid-column: 1 / -1; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inbox .conv { display: grid; grid-template-rows: auto 1fr auto; min-height: 560px; max-height: calc(100vh - 160px); padding: 16px; gap: 12px; }
+.inbox .conv .msgs { overflow: auto; align-content: start; padding-right: 4px; }
+.inbox .reply { display: flex; gap: 8px; align-items: flex-end; }
+.inbox .reply textarea { flex: 1; resize: vertical; min-height: 44px; }
+@media (max-width: 900px) { .inbox { grid-template-columns: 1fr; } }
 
 @media (max-width: 900px) {
   .shell { grid-template-columns: 1fr; }
@@ -223,6 +282,12 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
 <script>
 (() => {
   "use strict";
+  // Never inside a frame (clickjacking): the page stays hidden (the style in <head>) and tries to take over the window.
+  if (window.top !== window.self) {
+    try { window.top.location = window.self.location.href; } catch {}
+    return;
+  }
+  document.getElementById("antiframe")?.remove();
   const $ = (s, el = document) => el.querySelector(s);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const store = {
@@ -258,16 +323,17 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   const tierTag = (t) => (TIER[t] ? `<span class="tag ${TIER[t][1]}">${TIER[t][0]}</span>` : "");
   // Permissions (cv_admins.perms on the server; docs/API_PRODUCTION.md "Admin additions"), grouped for people.
   const PERM_GROUPS = [
-    ["Users", [["users.read", "See users"], ["users.write", "Edit users and notes"], ["users.suspend", "Suspend and sign out"], ["users.delete", "Delete accounts"]]],
+    ["Users", [["users.read", "See users"], ["users.write", "Edit users and notes"], ["users.suspend", "Suspend and sign out"], ["users.restrict", "Restrict what users can do"], ["users.delete", "Delete accounts"]]],
     ["Homes", [["listings.read", "See homes"], ["listings.review", "Approve, reject, take down"], ["listings.pin", "Pin homes for free"]]],
     ["Plans & badges", [["plans.grant", "Give memberships, agent plans and credits"], ["badges.grant", "Give badges and verification"], ["agents.review", "Review agent and landlord applications"]]],
-    ["Safety", [["chats.read", "Read chats (recorded)"], ["reports.read", "See reports"], ["reports.write", "Handle reports"]]],
+    ["Safety", [["chats.read", "Read chats (recorded)"], ["support.chat", "Write to users as ColivEase Support"], ["reports.read", "See reports"], ["reports.write", "Handle reports"]]],
     ["Site", [["settings.write", "Site settings"], ["notify.write", "Notification templates"], ["broadcast", "Send broadcasts"]]],
-    ["Team", [["staff.write", "Manage staff"], ["testers.write", "Test accounts"], ["audit.read", "See the audit log"]]],
+    ["Team", [["staff.write", "Manage staff"], ["testers.write", "Create and manage test accounts"], ["testers.signin", "Open test accounts and run stress tests"], ["audit.read", "See the audit log"]]],
   ];
   const ALL_PERMS = PERM_GROUPS.flatMap(([, list]) => list.map(([p]) => p));
   const TEMPLATES = {
     admin: ALL_PERMS.filter((p) => "staff.write" !== p),
+    // New permissions (users.restrict, support.chat, testers.signin) are only ever given by ticking them.
     moderator: ["users.read", "users.suspend", "listings.read", "listings.review", "chats.read", "reports.read", "reports.write", "audit.read", "agents.review"],
     support: ["users.read", "listings.read", "reports.read", "chats.read"],
   };
@@ -280,7 +346,28 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     "broadcast": "Sent a broadcast", "settings.update": "Changed site settings", "admin.set": "Set admin role", "admin.remove": "Removed admin", "staff.set": "Changed staff permissions", "staff.add": "Added staff", "staff.remove": "Removed staff",
     "account.mode": "Changed account mode", "testers.create": "Created test accounts", "testers.delete": "Deleted a test account", "testers.act-as": "Opened a test account", "act-as": "Opened a test account", "act_as": "Opened a test account", "agent.approve": "Approved an agent", "agent.reject": "Rejected an agent", "landlord.approve": "Approved a landlord", "landlord.reject": "Rejected a landlord", "agents.decision": "Decided an agent application",
     "notify.template": "Edited a notification", "notify.template.reset": "Reset a notification",
+    "account.restrict": "Changed restrictions", "listing.force": "Listed a home without its usual checks",
+    "testers.signin": "Opened test accounts", "testers.signin.refused": "Refused: open a real account", "testers.signout": "Signed test accounts out",
+    "testers.grant": "Gave test accounts plans or badges", "testers.revoke": "Removed plans or badges from test accounts", "testers.restrict": "Restricted test accounts",
+    "testers.suspend": "Suspended test accounts", "testers.unsuspend": "Lifted test suspensions", "testers.reset": "Reset test accounts", "testers.signout.bulk": "Signed test accounts out",
+    "support.start": "Started a Support chat", "support.send": "Wrote as ColivEase Support",
   };
+  const RESTRICT = [["post", "Post homes and send invites"], ["chat", "Send messages (Support stays open)"], ["apply", "Apply for homes"], ["teams", "Create or join teams"], ["readonly", "Read-only (browse only)"]];
+  const AREAS = { downtown: "Downtown", midtown: "Midtown", north_york: "North York", scarborough: "Scarborough", etobicoke: "Etobicoke", east_end: "East End", mississauga: "Mississauga", markham: "Markham" };
+  // CSV (Excel-friendly: UTF-8 with BOM) of rows → file download.
+  // A cell starting with = + - @, a tab or a carriage return would run as a formula in Excel / Sheets: it gets a
+  // leading single quote (shown as text).
+  const csvCell = (v) => { let s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v); if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`; return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  function downloadFile(name, text, type = "text/csv;charset=utf-8") {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([type.startsWith("text/csv") ? "﻿" + text : text], { type }));
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  const toCsv = (cols, rows) => [cols.map(([, h]) => csvCell(h)).join(","), ...rows.map((r) => cols.map(([k]) => csvCell(typeof k === "function" ? k(r) : r[k])).join(","))].join("\r\n");
+  const stamp = () => new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
   const ICON = {
     overview: '<path d="M3 13h8V3H3zM13 21h8v-8h-8zM3 21h8v-6H3zM13 3v8h8V3z"/>',
     accounts: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 14.2c3 .2 5.5 2.6 5.5 5.8"/>',
@@ -296,6 +383,8 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     landlords: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
     agents: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.5c.5-1.6 1.7-2.5 3.2-2.5s2.7.9 3.2 2.5M14.5 10h4M14.5 13.5h3"/>',
     notifications: '<path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/>',
+    support: '<path d="M4 13v-1a8 8 0 0116 0v1"/><rect x="2.5" y="13" width="4" height="6" rx="1.5"/><rect x="17.5" y="13" width="4" height="6" rx="1.5"/><path d="M19.5 19c0 1.5-2 2.5-5 2.5"/>',
+    stress: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
   };
 
   const LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
@@ -307,6 +396,10 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   const savedApi = store.get("cv-admin-api");
   let API = savedApi && "https://api.colivease.ca" !== savedApi ? savedApi : DEFAULT_API;
   let TOKEN = store.get("cv-admin-token");
+  // The app that test accounts open in (#cv-tab-session=<token>: that tab or frame only, kept in memory by the app). A
+  // local copy of the panel can point it at a local web build ("cv-admin-app").
+  const APP_URL = (LOCAL && store.get("cv-admin-app")) || (LOCAL ? "http://localhost:5188/app.html" : "https://www.colivease.ca/app.html");
+  const tabUrl = (token) => `${APP_URL}#cv-tab-session=${enc(token)}`;
   let ME = null;
   let view = "overview";
   // What the signed-in staff member may do: /admin/me sends `perms` (new) or `permissions`/`role` (older servers).
@@ -321,6 +414,8 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     PERMS_SET = out;
   }
   const can = (p) => PERMS_SET.has(p);
+  // A section's permission: none, one, or any of a list.
+  const allowed = (p) => !p || (Array.isArray(p) ? p.some(can) : can(p));
 
   async function api(method, path, body) {
     const r = await fetch(API.replace(/\/$/, "") + path, {
@@ -340,6 +435,29 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       throw Object.assign(new Error(msg), { status: r.status, code: json.code });
     }
     return json;
+  }
+  // A request as a test account (stress tests): the tester's own session, never the staff one. Resolves with
+  // {status, ms, code, json}; never throws.
+  async function testerCall(token, method, path, body, timeoutMs = 20000) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), timeoutMs);
+    const t0 = performance.now();
+    try {
+      const r = await fetch(API.replace(/\/$/, "") + path, {
+        method,
+        signal: ctl.signal,
+        headers: API.includes(".supabase.co")
+          ? { ...(body ? { "content-type": "application/json" } : {}), apikey: ANON_KEY, authorization: `Bearer ${ANON_KEY}`, "x-cv-token": token }
+          : { ...(body ? { "content-type": "application/json" } : {}), "x-cv-token": token, authorization: `Bearer ${token}` },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const json = await r.json().catch(() => ({}));
+      return { status: r.status, ms: performance.now() - t0, code: r.ok ? null : json.code || null, error: r.ok ? null : json.error || null, json };
+    } catch (e) {
+      return { status: 0, ms: performance.now() - t0, code: "abort" === e?.name || ctl.signal.aborted ? "TIMEOUT" : "NETWORK", error: String(e?.message || e), json: {} };
+    } finally {
+      clearTimeout(timer);
+    }
   }
   function toast(text) {
     const el = document.createElement("div");
@@ -500,13 +618,16 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   $("#setpw").onclick = () => setPassword(false);
 
   // ---- shell
+  // [view, label, permission (one, or any of a list)]
   const SECTIONS = [
     ["overview", "Overview", null],
     ["accounts", "Users", "users.read"],
-    ["testers", "Test accounts", "testers.write"],
+    ["testers", "Test accounts", ["testers.write", "testers.signin"]],
+    ["stress", "Stress test", "testers.signin"],
     ["listings", "Home review", "listings.read"],
     ["agents", "Agent applications", "agents.review"],
     ["landlords", "Landlord applications", "agents.review"],
+    ["support", "Messages", "support.chat"],
     ["chats", "Chats", "chats.read"],
     ["reports", "Reports", "reports.read"],
     ["members", "Memberships", "users.read"],
@@ -520,9 +641,10 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   let pendingHomes = 0;
   let pendingAgents = 0;
   let pendingLandlords = 0;
+  let supportUnread = 0;
   function renderNav() {
-    const badge = { reports: openReports, listings: pendingHomes, agents: pendingAgents, landlords: pendingLandlords };
-    $("#nav").innerHTML = SECTIONS.filter(([, , p]) => !p || can(p))
+    const badge = { reports: openReports, listings: pendingHomes, agents: pendingAgents, landlords: pendingLandlords, support: supportUnread };
+    $("#nav").innerHTML = SECTIONS.filter(([, , p]) => allowed(p))
       .map(([key, label]) => `<button data-view="${key}" class="${key === view ? "on" : ""}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[key] || ICON.admins}</svg>${label}${badge[key] ? `<span class="count">${badge[key]}</span>` : ""}</button>`)
       .join("");
     $("#nav").querySelectorAll("button").forEach((b) => (b.onclick = () => go(b.dataset.view)));
@@ -549,7 +671,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     const tpl = isOwner() ? "owner" : ME.role && !Array.isArray(ME.perms) ? ME.role : templateOf([...PERMS_SET].filter((p) => ALL_PERMS.includes(p))) || "custom";
     $("#who-role").textContent = "custom" === tpl ? `Custom · ${plural([...PERMS_SET].filter((p) => ALL_PERMS.includes(p)).length, "permission")}` : ROLE[tpl] || tpl;
     const saved = store.get("cv-admin-view");
-    go(SECTIONS.some(([k, , p]) => k === saved && (!p || can(p))) ? saved : "overview");
+    go(SECTIONS.some(([k, , p]) => k === saved && allowed(p)) ? saved : "overview");
     refreshCounts();
   }
   function takeCounts(o) {
@@ -557,6 +679,7 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     pendingHomes = o.pendingListings ?? o.pendingReviews ?? 0;
     pendingAgents = o.pendingAgents ?? o.pendingAgentApplications ?? 0;
     pendingLandlords = o.pendingLandlords ?? 0;
+    supportUnread = o.supportUnread ?? 0;
     renderNav();
   }
   async function refreshCounts() {
@@ -588,11 +711,12 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       ["Landlord applications", n(o.pendingLandlords), "answer within 48 hours", "landlords"],
       ["Open reports", n(o.openReports), o.autoHidden != null ? `${o.autoHidden} auto-hidden` : "not resolved yet", "reports"],
       ["Members", n(o.members), "Gold · Diamond", "members"],
-      ["Suspended", n(o.suspended), "accounts", "accounts"],
+      ["Suspended", n(o.suspended), o.restricted != null ? `${o.restricted} restricted` : "accounts", "accounts"],
+      ...(o.supportUnread != null ? [["Support chats waiting", n(o.supportUnread), "users waiting for a reply", "support"]] : []),
     ];
     $("#main").innerHTML = `${page("Overview", "How ColivEase is doing right now")}
       <div class="stats">
-        ${cards.map(([k, v, s, to]) => `<div class="card stat" ${SECTIONS.some(([key, , p]) => key === to && (!p || can(p))) ? `data-to="${to}" style="cursor:pointer"` : ""}><small>${k}</small><b>${esc(v)}</b><em>${esc(s)}</em></div>`).join("")}
+        ${cards.map(([k, v, s, to]) => `<div class="card stat" ${SECTIONS.some(([key, , p]) => key === to && allowed(p)) ? `data-to="${to}" style="cursor:pointer"` : ""}><small>${k}</small><b>${esc(v)}</b><em>${esc(s)}</em></div>`).join("")}
       </div>
       <div class="grid2"${showAudit ? "" : ` style="grid-template-columns:1fr"`}>
         <div class="card panel"><h3>New sign-ups, last 14 days</h3>${signups.length ? `<div class="bars">${signups.map((d) => `<div title="${new Date(d.day).toLocaleDateString("en-CA", { timeZone: "America/Toronto" })}: ${d.count}"><b>${d.count || ""}</b><span style="height:${(d.count / max) * 100}%"></span>${new Date(d.day).toLocaleDateString("en-CA", { timeZone: "America/Toronto", day: "numeric" })}</div>`).join("")}</div>` : `<p class="hint">No data yet.</p>`}</div>
@@ -605,8 +729,8 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   let acctFilter = "all", acctQuery = "";
   VIEWS.accounts = async (filterOverride) => {
     const filter = filterOverride || acctFilter;
-    $("#main").innerHTML = `${page(filterOverride === "members" ? "Memberships" : "Users", filterOverride === "members" ? "Accounts with Gold or Diamond. Open an account to give or remove a plan." : "Every account: profile, status and permissions", `<input class="input" id="q" placeholder="Search email, name or ID" value="${esc(acctQuery)}">`)}
-      ${filterOverride ? "" : `<div class="chips">${[["all", "All"], ["real", "Real accounts"], ["test", "Test accounts"], ["agents", "Agents"], ["members", "Gold & Diamond"], ["suspended", "Suspended"], ["admins", "Staff"]].map(([k, l]) => `<button class="chip ${k === filter ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>`}
+    $("#main").innerHTML = `${page(filterOverride === "members" ? "Memberships" : "Users", filterOverride === "members" ? "Accounts with Gold or Diamond. Open an account to give or remove a plan." : "Every account: profile, status and permissions", `<input class="input" id="q" placeholder="Search email, name, phone or ID" value="${esc(acctQuery)}"><button class="btn" id="csv">Export CSV</button>`)}
+      ${filterOverride ? "" : `<div class="chips">${[["all", "All"], ["real", "Real accounts"], ["test", "Test accounts"], ["agents", "Agents"], ["landlord", "Landlords"], ["members", "Gold & Diamond"], ["suspended", "Suspended"], ["restricted", "Restricted"], ["admins", "Staff"]].map(([k, l]) => `<button class="chip ${k === filter ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>`}
       <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
     $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { acctFilter = b.dataset.f; VIEWS.accounts(); }));
     let timer;
@@ -616,15 +740,22 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       real: (a) => !a.test, test: (a) => Boolean(a.test), agents: (a) => "agent" === a.kind,
       members: (a) => Boolean(TIER[tierOf(a)] || a.plans?.plus || a.plans?.landlordPro || a.plans?.agentPro),
       suspended: (a) => Boolean(a.suspended), admins: (a) => Boolean(a.adminRole || a.staff),
+      restricted: (a) => Boolean(a.restrictions?.length), landlord: (a) => "landlord" === a.mode,
+    };
+    let shown = [];
+    $("#csv").onclick = () => {
+      if (!shown.length) return toast("Nothing to export");
+      downloadFile(`colivease-users-${stamp()}.csv`, toCsv([["id", "Account ID"], ["email", "Email"], [(a) => txt(a.name), "Name"], ["kind", "Kind"], [(a) => (a.test ? "test" : "real"), "Type"], ["mode", "Mode"], [(a) => (a.languages || []).join(" "), "Communities"], [(a) => a.entitlements?.tier || "free", "Membership"], [(a) => a.entitlements?.agentPlan || "", "Agent plan"], ["homes", "Homes"], ["phone", "Phone"], [(a) => fmt(a.createdAt), "Joined"], [(a) => fmt(a.lastActive), "Last active"], [(a) => (a.suspended ? "suspended" : "active"), "Status"], [(a) => (a.restrictions || []).join(" "), "Restrictions"], ["adminRole", "Staff role"]], shown));
     };
     async function load() {
       const { accounts = [] } = await api("GET", `/api/admin/accounts?q=${enc(acctQuery)}&filter=${filter}`);
       const list = accounts.filter(keep[filter] || (() => true));
+      shown = list;
       $("#tbl").innerHTML = list.length
         ? `<table><thead><tr><th>User</th><th>Type</th><th>Community</th><th>Plan</th><th>Homes</th><th>Last active</th><th>Status</th></tr></thead><tbody>${list
             .map((a) => {
               const e = a.entitlements || {};
-              return `<tr class="click" data-id="${esc(a.id)}"><td><b>${esc(txt(a.name) || "(no name)")}</b><span class="sub">${esc(a.email || "")}</span></td><td><div class="tags">${"agent" === a.kind ? `<span class="tag amber">Agent</span>` : `<span class="tag">Member</span>`}${a.test ? `<span class="tag blue">Test</span>` : ""}</div></td><td>${esc((a.languages || []).map((k) => LANG[k] || k).join(", ") || "—")}</td><td><div class="tags">${tierTag(tierOf(a))}${PLAN[a.agentPlan || e.agentPlan] ? `<span class="tag green">${PLAN[a.agentPlan || e.agentPlan]}</span>` : ""}${a.plans?.plus && !TIER[tierOf(a)] ? tierTag("gold") : ""}${TIER[tierOf(a)] || PLAN[a.agentPlan || e.agentPlan] || a.plans?.plus ? "" : "—"}</div></td><td>${count(a.listings)}</td><td>${ago(a.lastActive)}</td><td><div class="tags">${a.suspended ? `<span class="tag red">Suspended</span>` : `<span class="tag green">Active</span>`}${a.verified || (e.badges || a.badges || []).includes("verified") ? `<span class="tag blue">Verified</span>` : ""}${a.adminRole || a.staff ? `<span class="tag amber">${esc(ROLE[a.adminRole] || "Staff")}</span>` : ""}</div></td></tr>`;
+              return `<tr class="click" data-id="${esc(a.id)}"><td><b>${esc(txt(a.name) || "(no name)")}</b><span class="sub">${esc(a.email || "")}</span></td><td><div class="tags">${"agent" === a.kind ? `<span class="tag amber">Agent</span>` : `<span class="tag">Member</span>`}${a.test ? `<span class="tag blue">Test</span>` : ""}</div></td><td>${esc((a.languages || []).map((k) => LANG[k] || k).join(", ") || "—")}</td><td><div class="tags">${tierTag(tierOf(a))}${PLAN[a.agentPlan || e.agentPlan] ? `<span class="tag green">${PLAN[a.agentPlan || e.agentPlan]}</span>` : ""}${a.plans?.plus && !TIER[tierOf(a)] ? tierTag("gold") : ""}${TIER[tierOf(a)] || PLAN[a.agentPlan || e.agentPlan] || a.plans?.plus ? "" : "—"}</div></td><td>${count(a.listings)}</td><td>${ago(a.lastActive)}</td><td><div class="tags">${a.suspended ? `<span class="tag red">Suspended</span>` : `<span class="tag green">Active</span>`}${a.restrictions?.length ? `<span class="tag amber" title="${esc(a.restrictions.join(", "))}">Restricted</span>` : ""}${a.verified || (e.badges || a.badges || []).includes("verified") ? `<span class="tag blue">Verified</span>` : ""}${a.adminRole || a.staff ? `<span class="tag amber">${esc(ROLE[a.adminRole] || "Staff")}</span>` : ""}</div></td></tr>`;
             })
             .join("")}</tbody></table>`
         : `<div class="empty">No accounts match.</div>`;
@@ -659,13 +790,14 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   const BADGES = [["verified", "Verified"], ["agent", "Licensed agent"], ["captain", "Captain"], ["student", "Student"], ["landlord", "Landlord"]];
   const rawId = (id) => String(id || "").replace(/^acct:/, "");
 
-  // Test accounts: the server hands back a session for that account; the website signs in with it (#cv-token=).
+  // Test accounts: the server hands back a session for that test account (never a real one); the app keeps it in that
+  // tab only (#cv-tab-session=), so your own ColivEase sign-in in this browser stays as it is.
   async function actAs(accountId) {
     const w = window.open("about:blank", "_blank");
     try {
-      const { token } = await api("POST", "/api/admin/act-as", { accountId });
+      const { token } = await api("POST", `/api/admin/testers/${enc(accountId)}/session`, {});
       if (!token) throw new Error("The server didn't send a session for this account.");
-      const url = `https://www.colivease.ca/app.html#cv-token=${enc(token)}`;
+      const url = tabUrl(token);
       if (w) {
         w.opener = null;
         w.location.href = url;
@@ -675,6 +807,59 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       w?.close();
       toast(e.message);
     }
+  }
+  // Sessions for many test accounts at once (multi-session console, stress tests).
+  const testerSessions = async (ids, purpose) => (await api("POST", "/api/admin/testers/sessions", { ids, purpose })).sessions || [];
+
+  // ---- multi-session console: a grid of the app, each frame signed in as a different test account
+  function openConsole(sessions) {
+    $("#console")?.remove();
+    const cols = Math.min(4, Math.max(1, Number(store.get("cv-admin-console-cols")) || (sessions.length <= 2 ? sessions.length : sessions.length <= 6 ? 3 : 4)));
+    const el = document.createElement("div");
+    el.className = "console";
+    el.id = "console";
+    const label = (s) => `${txt(s.name) || s.email}${"agent" === s.kind ? " · agent" : ""}`;
+    el.innerHTML = `<div class="console-head"><h3>Test accounts · ${plural(sessions.length, "window")}</h3>
+        <label class="hint" style="color:#cbd5e1">Columns <select id="c-cols">${[1, 2, 3, 4].map((n) => `<option ${n === cols ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+        <button class="btn" id="c-tabs">Open as tabs instead</button>
+        <button class="btn" id="c-reload">Reload all</button>
+        <button class="btn danger" id="c-signout" title="Ends these test sessions on the server">Sign them out</button>
+        <span class="hint" style="color:#cbd5e1">Each frame is its own account, kept in that frame only. App: ${esc(APP_URL)}</span>
+        <button class="btn primary" id="c-close" style="margin-left:auto">Close</button></div>
+      <div class="console-grid" id="c-grid" style="--cols:${cols}">${sessions.map((s, i) => `<div class="console-cell" data-i="${i}"><header><span class="tag amber">Test</span><b title="${esc(s.email || "")}">${esc(label(s))}</b><span class="sp"><button class="btn small" data-reload>Reload</button><a class="btn small" href="${esc(tabUrl(s.token))}" target="_blank" rel="noopener">New tab</a><button class="btn small" data-x title="Close this frame">✕</button></span></header><iframe title="${esc(label(s))}" src="${esc(tabUrl(s.token))}" allow="clipboard-write; geolocation"></iframe></div>`).join("")}</div>`;
+    document.body.appendChild(el);
+    const grid = $("#c-grid", el);
+    $("#c-cols", el).onchange = (e) => { grid.style.setProperty("--cols", e.target.value); store.set("cv-admin-console-cols", e.target.value); };
+    $("#c-close", el).onclick = () => el.remove();
+    // The app removes the session from its address, so the same src again would only be a fragment change: load a
+    // blank page first, then the app again (a real reload).
+    const reload = (f) => { const src = f.dataset.src; f.src = "about:blank"; setTimeout(() => (f.src = src), 60); };
+    el.querySelectorAll("iframe").forEach((f) => (f.dataset.src = f.getAttribute("src")));
+    $("#c-reload", el).onclick = () => el.querySelectorAll("iframe").forEach(reload);
+    $("#c-tabs", el).onclick = () => openTabsFallback(sessions);
+    $("#c-signout", el).onclick = async () => {
+      if (!(await dialog({ title: "Sign these test accounts out?", body: `<p class="hint">Every session of these ${plural(sessions.length, "test account")} ends (the frames stop working).</p>`, confirm: "Sign out", danger: true }))) return;
+      try { await api("POST", "/api/admin/testers/sessions/revoke", { ids: sessions.map((s) => s.accountId) }); toast("Signed out"); el.remove(); } catch (e) { toast(e.message); }
+    };
+    el.querySelectorAll(".console-cell").forEach((cell) => {
+      const f = cell.querySelector("iframe");
+      cell.querySelector("[data-reload]").onclick = () => reload(f);
+      cell.querySelector("[data-x]").onclick = () => cell.remove();
+    });
+  }
+  // When frames are blocked (or for real windows): one button per account; each click opens one tab, which popup
+  // blockers allow.
+  function openTabsFallback(sessions) {
+    $("#console-tabs")?.remove();
+    const box = document.createElement("div");
+    box.className = "console";
+    box.id = "console-tabs";
+    box.style.zIndex = 26;
+    box.innerHTML = `<div class="console-head"><h3>Open as tabs</h3><span class="hint" style="color:#cbd5e1">One click per account (browsers allow one new tab per click). Each tab is its own account.</span><button class="btn primary" id="t-close" style="margin-left:auto">Close</button></div>
+      <div class="console-tabs"><div class="list">${sessions.map((s, i) => `<div class="item"><div><b>${esc(txt(s.name) || s.email)}</b><span class="sub">${esc(s.email || "")} · ${esc(s.kind || "")}</span></div><a class="btn small primary" data-i="${i}" href="${esc(tabUrl(s.token))}" target="_blank" rel="noopener">Open</a></div>`).join("")}</div></div>`;
+    document.body.appendChild(box);
+    $("#t-close", box).onclick = () => box.remove();
+    box.querySelectorAll("a[data-i]").forEach((a) => a.addEventListener("click", () => { a.textContent = "Opened"; a.classList.remove("primary"); }));
   }
   const grantTo = async (id, body, msg) => {
     try { await api("POST", `/api/admin/accounts/${enc(id)}/grant`, body); toast(msg); return true; } catch (e) { toast(e.message); return false; }
@@ -702,11 +887,14 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
         <div class="tags" style="margin-top:6px">${"agent" === a.kind ? `<span class="tag amber">Agent account</span>` : `<span class="tag">Member account</span>`}${a.test ? `<span class="tag blue">Test account</span>` : ""}${tierTag(e.tier || a.tier)}${badges.map((b) => `<span class="tag green">${esc(BADGES.find(([k]) => k === b)?.[1] || b)}</span>`).join("")}</div></div>
       ${a.test && can("testers.write") ? `<div class="notice blue row" style="justify-content:space-between"><span>Test account: only other test accounts and staff can see it.</span><button class="btn small primary" id="act-as">Open as this account</button></div>` : ""}
       ${a.suspended ? `<div class="notice">Suspended: ${esc(a.suspendReason || "no reason given")}</div>` : ""}
+      ${a.restrictions?.length ? `<div class="notice">Restricted: ${esc(a.restrictions.map((r) => RESTRICT.find(([k]) => k === r)?.[1] || r).join(" · "))}</div>` : ""}
+      ${can("support.chat") ? `<div class="row"><button class="btn small" id="support-msg">${a.supportThread ? `Open Support chat${a.supportThread.unread ? ` (${a.supportThread.unread} new)` : ""}` : "Message as ColivEase Support"}</button></div>` : ""}
       <section><h4>PROFILE</h4><div class="kv">
         <span>Community</span><span>${esc((a.languages || p.languages || []).map((k) => LANG[k] || k).join(", ") || "—")}</span>
         <span>Joined</span><span>${fmt(a.createdAt)}</span>
         <span>Last active</span><span>${fmt(a.lastActive)}</span>
         ${a.sessions != null ? `<span>Signed in on</span><span>${plural(a.sessions, "device")}</span>` : ""}
+        ${a.phone ? `<span>Phone</span><span>${esc(a.phone)}</span>` : ""}
         <span>Age / areas</span><span>${esc(p.age ?? "—")} / ${esc((Array.isArray(p.areas) ? p.areas.join(", ") : p.district ?? p.area) || "—")}</span>
         <span>Budget</span><span>${p.budget ? esc(Array.isArray(p.budget) ? p.budget.map((n) => `$${n}`).join(" – ") : p.budget) : "—"}</span>
         <span>About</span><span>${esc(txt(p.bio) || "—")}</span>
@@ -729,6 +917,8 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
           <label class="field">Invites<input class="input sm num" id="g-inv" type="number" min="0" max="10000" value="${esc(e.inviteCredits ?? 0)}"></label>
           <label class="field">Lease checks<input class="input sm num" id="g-lease" type="number" min="0" max="1000" value="${esc(e.leaseChecks ?? 0)}"></label>
           <label class="field">Contracts<input class="input sm num" id="g-contract" type="number" min="0" max="1000" value="${esc(e.contractCredits ?? 0)}"></label>
+          <label class="field">Pins<input class="input sm num" id="g-pins" type="number" min="0" max="1000" value="${esc(e.pinCredits ?? 0)}"></label>
+          <label class="field">ID checks<input class="input sm num" id="g-verify" type="number" min="0" max="1000" value="${esc(e.verifyCredits ?? 0)}"></label>
         </div><div><button class="btn small primary" id="g-credits-go">Save credits</button></div></div>` : ""}
         ${can("badges.grant") ? `
         <div class="grant"><b>Verified badge</b><div class="row"><span class="hint">for</span><input class="input sm num" id="g-ver-years" type="number" min="1" max="10" value="3"><span class="hint">years</span><button class="btn small primary" id="g-ver-go">Mark verified</button>${isVerified ? `<button class="btn small danger" id="g-ver-rm">Remove</button>` : ""}</div></div>
@@ -736,11 +926,25 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
           <input class="input" id="g-badges-extra" placeholder="Other badges, separated by commas (e.g. early-supporter, ambassador)" value="${esc(extraBadges.join(", "))}">
           <div><button class="btn small primary" id="g-badges-go">Save badges</button></div></div>` : ""}
       </section>` : ""}
+      ${can("agents.review") ? `<section><h4>APPROVALS</h4><p class="hint">Without waiting for an application (or deciding the one waiting). The person is told.</p>
+        ${"agent" === a.kind ? `<div class="grant"><b>Licensed agent badge</b><span class="hint">${app?.status === "approved" ? "Approved." : "Not approved yet."} Give the details from RECO's register.</span>
+          <div class="row"><input class="input sm" id="lic-name" placeholder="Full name" value="${esc(app?.fullName || name || "")}" style="width:170px"><input class="input sm" id="lic-reco" placeholder="RECO number" value="${esc(app?.reco || "")}" style="width:130px"><input class="input sm" id="lic-brok" placeholder="Brokerage" value="${esc(app?.brokerage || "")}" style="width:170px"></div>
+          <div class="row"><button class="btn small primary" id="lic-go">${app?.status === "approved" ? "Update" : "Approve as licensed agent"}</button>${app?.status === "approved" ? `<button class="btn small danger" id="lic-rm">Remove licence badge</button>` : ""}</div></div>`
+        : `<div class="grant"><b>Landlord mode</b><span class="hint">${a.landlordStatus === "approved" || badges.includes("landlord") ? "Approved: they can post homes as a landlord." : a.landlordStatus ? `Application: ${esc(a.landlordStatus)}.` : "No application."}</span>
+          <div class="row">${a.landlordStatus === "approved" || badges.includes("landlord") ? `<button class="btn small danger" id="ll-rm">Turn landlord mode off</button>` : `<button class="btn small primary" id="ll-go">Approve landlord mode</button>`}</div></div>`}
+      </section>` : ""}
+      ${can("users.restrict") && !isStaffOwner ? `<section><h4>RESTRICTIONS</h4><p class="hint">Turn off parts of ColivEase for this account. The server enforces it and the app explains it; Support chats always stay open.</p>
+        <div class="pick" id="restrict">${RESTRICT.map(([k, l]) => `<label><input type="checkbox" value="${k}" ${(a.restrictions || []).includes(k) ? "checked" : ""}>${esc(l)}</label>`).join("")}</div>
+        <input class="input" id="restrict-why" placeholder="Reason (the person sees it)">
+        <div><button class="btn small primary" id="restrict-go">Save restrictions</button></div></section>` : ""}
       ${app ? `<section><h4>AGENT APPLICATION</h4><div class="kv"><span>Status</span><span>${esc(app.status)}</span><span>Full name</span><span>${esc(app.fullName || app.full_name || "—")}</span><span>RECO number</span><span>${esc(app.reco || "—")} <a href="https://registrantsearch.reco.on.ca/" target="_blank" rel="noopener">Look up</a></span><span>Brokerage</span><span>${esc(app.brokerage || "—")}</span>${app.note ? `<span>Note</span><span>${esc(app.note)}</span>` : ""}</div>${can("agents.review") ? `<div><button class="btn small" id="to-agents">Open agent applications</button></div>` : ""}</section>` : ""}
       ${can("users.write") ? `<section><h4>INTERNAL NOTE</h4><textarea class="input" id="note" rows="2" placeholder="The user never sees this">${esc(a.note || "")}</textarea><div><button class="btn small" id="save-note">Save note</button></div></section>` : ""}
       <section><h4>HOMES POSTED (${homes.length})</h4>${homes.length ? `<div class="list">${homes.map((l) => { const h = homeInfo(l); return `<div class="item"><div>${esc(txt(l.title) || "(no title)")}<span class="sub">${priceText(l)} · ${esc(l.district || "")} · ${pinText(h)} · ${expiryText(h)}</span></div>${statusTag(h)}</div>`; }).join("")}</div>` : `<p class="hint">None.</p>`}</section>
       ${can("chats.read") ? `<section><h4>CHATS (${threads.length})</h4>${threads.length ? `<div class="list">${threads.map((t) => `<div class="item"><div>${esc(t.title || t.members.map((m) => txt(m.name) || m.email || m.id).join(", ") || t.id)}<span class="sub">${KIND[t.kind] || esc(t.kind)} · ${plural(t.count, "message")} · ${ago(t.last)}</span></div><button class="btn small" data-chat="${esc(t.id)}" data-legacy="${t.legacy ? "1" : ""}">Open</button></div>`).join("")}</div>` : `<p class="hint">None.</p>`}</section>` : ""}
+      ${a.landlordApplication ? `<section><h4>LANDLORD APPLICATION</h4><div class="kv"><span>Status</span><span>${esc(a.landlordApplication.status)}</span><span>Full name</span><span>${esc(a.landlordApplication.fullName || "—")}</span><span>Connection</span><span>${esc(a.landlordApplication.relation || "—")} · ${esc(a.landlordApplication.area || "")}</span>${a.landlordApplication.phone ? `<span>Phone</span><span>${esc(a.landlordApplication.phone)}</span>` : ""}${a.landlordApplication.note ? `<span>Note</span><span>${esc(a.landlordApplication.note)}</span>` : ""}</div></section>` : ""}
       <section><h4>REPORTS THEY MADE (${reports.length})</h4>${reports.length ? `<div class="list">${reports.map((r) => `<div class="item"><div>${esc(REASON[r.reason] || r.reason)}<span class="sub">${esc(r.details ?? r.note ?? "")} · ${ago(r.at ?? r.created_at ?? r.ts)}</span></div></div>`).join("")}</div>` : `<p class="hint">None.</p>`}</section>
+      ${Array.isArray(a.history) && can("audit.read") ? `<section><h4>STAFF HISTORY (${a.history.length})</h4>${a.history.length ? `<div class="list">${a.history.slice(0, 40).map((h) => `<div class="item"><div>${esc(ACTION[h.action] || h.action)}<span class="sub">${esc(h.admin || "")} · ${fmt(h.at)}${h.reason ? ` · ${esc(h.reason)}` : ""}</span></div></div>`).join("")}</div>` : `<p class="hint">No staff actions on this account.</p>`}</section>` : ""}
+      ${Array.isArray(a.notifications) && a.notifications.length ? `<section><h4>NOTIFICATIONS SENT (last ${a.notifications.length})</h4><div class="list">${a.notifications.slice(0, 15).map((n) => `<div class="item"><div>${esc(n.kind)}<span class="sub">${esc(n.channel)} · ${esc(n.status)}${n.detail ? ` · ${esc(n.detail)}` : ""} · ${ago(n.at)}</span></div></div>`).join("")}</div></section>` : ""}
       <section><h4>ACCOUNT</h4><div class="row">
         ${can("users.suspend") && !isStaffOwner ? (a.suspended ? `<button class="btn" id="unsuspend">Lift suspension</button>` : `<button class="btn danger" id="suspend">Suspend</button>`) : ""}
         ${can("users.suspend") && (!isStaffOwner || isOwner()) ? `<button class="btn" id="kick">Sign out everywhere</button>` : ""}
@@ -759,9 +963,9 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     on("#g-plan-go", () => { const d = num("#g-plan-days"); if (!(d > 0)) return toast("Enter a number of days"); grant({ agentPlan: $("#g-plan", el).value, agentDays: d }, `Agent plan given for ${plural(d, "day")}`); });
     on("#g-plan-rm", () => grant({ agentPlan: null, agentDays: 0 }, "Agent plan removed"));
     on("#g-credits-go", () => {
-      const vals = [num("#g-inv"), num("#g-lease"), num("#g-contract")];
+      const vals = [num("#g-inv"), num("#g-lease"), num("#g-contract"), num("#g-pins"), num("#g-verify")];
       if (vals.some((x) => !(x >= 0))) return toast("Credits must be 0 or more");
-      grant({ inviteCredits: vals[0], leaseChecks: vals[1], contractCredits: vals[2] }, "Credits saved");
+      grant({ inviteCredits: vals[0], leaseChecks: vals[1], contractCredits: vals[2], pinCredits: vals[3], verifyCredits: vals[4] }, "Credits saved");
     });
     on("#g-ver-go", () => { const y = num("#g-ver-years"); if (!(y > 0)) return toast("Enter a number of years"); grant({ verifiedYears: y }, `Verified for ${plural(y, "year")}`); });
     on("#g-ver-rm", () => grant({ verifiedYears: 0, badges: badges.filter((b) => "verified" !== b) }, "Verified badge removed"));
@@ -769,6 +973,21 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
       const picked = [...el.querySelectorAll("[data-badge]")].filter((c) => c.checked).map((c) => c.dataset.badge);
       const extra = $("#g-badges-extra", el).value.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
       grant({ badges: [...new Set([...picked, ...extra])] }, "Badges saved");
+    });
+    on("#support-msg", () => (a.supportThread ? (go("support"), openSupport(a.supportThread.id)) : startSupport(a.id, name || a.email)));
+    on("#lic-go", () => {
+      const fullName = $("#lic-name", el).value.trim(), reco = $("#lic-reco", el).value.trim(), brokerage = $("#lic-brok", el).value.trim();
+      if (!fullName || !reco || !brokerage) return toast("Fill in the name, RECO number and brokerage");
+      grant({ agentLicence: { approve: true, fullName, reco, brokerage } }, "Licensed agent badge given. They've been told.");
+    });
+    on("#lic-rm", async () => { const r = await dialog({ title: "Remove the licensed agent badge?", fields: [{ name: "note", label: "Reason (they see it)", required: true }], confirm: "Remove", danger: true }); if (r) grant({ agentLicence: { approve: false, note: r.note } }, "Licence badge removed"); });
+    on("#ll-go", () => grant({ landlordApproved: true }, "Landlord mode approved. They've been told."));
+    on("#ll-rm", async () => { const r = await dialog({ title: "Turn landlord mode off?", body: `<p class="hint">Their landlord homes stop being shown until it's approved again.</p>`, fields: [{ name: "reason", label: "Reason (they see it)", required: true }], confirm: "Turn off", danger: true }); if (r) grant({ landlordApproved: false, reason: r.reason }, "Landlord mode turned off"); });
+    on("#restrict-go", async () => {
+      const list = [...el.querySelectorAll("#restrict input")].filter((c) => c.checked).map((c) => c.value);
+      const why = $("#restrict-why", el).value.trim();
+      if (list.length && why.length < 2) return toast("Say why (the person sees it)");
+      try { await api("POST", `/api/admin/accounts/${enc(id)}/restrictions`, { restrictions: list, reason: why }); toast(list.length ? "Restrictions saved. They've been told." : "All restrictions lifted"); refresh(); } catch (er) { toast(er.message); }
     });
     on("#suspend", async () => {
       const r = await dialog({ title: "Suspend this account?", body: `<p class="hint">They're signed out right away and can't sign in again until you lift it.</p>`, fields: [{ name: "reason", label: "Reason", required: true, minlength: 2, placeholder: "e.g. scam, harassment, fake listing" }], confirm: "Suspend", danger: true });
@@ -788,25 +1007,66 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
   }
 
   // Homes
-  let homeStatus = "pending", homeQuery = "";
+  let homeStatus = "pending", homeQuery = "", homeWho = "all", homeHost = "all", homeArea = "all";
+  let homeSel = new Set();
   const SERVER_STATUS = new Set(["pending", "visible", "rejected", "hidden", "draft", "edited", "all"]);
   VIEWS.listings = async () => {
     $("#main").innerHTML = `${page("Home review", "Every new home is checked by a person before it goes live. A live home its owner edits stays live and shows under “Edited since approval” for you to check again. Homes expire 60 days after posting unless pinned. When 3 different people report a home, it's hidden until you decide.", `<input class="input" id="q" placeholder="Search title, poster or area" value="${esc(homeQuery)}">`)}
       <div class="chips">${[["pending", "Waiting"], ["edited", "Edited since approval"], ["visible", "Live"], ["pinned", "Pinned"], ["auto_hidden", "Hidden by reports"], ["rejected", "Not approved"], ["hidden", "Taken down"], ["expired", "Expired"], ["draft", "Drafts"], ["all", "All"]].map(([k, l]) => `<button class="chip ${k === homeStatus ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
+      <div class="row" style="margin-bottom:12px">
+        <select class="input sm" id="h-who"><option value="all">Real and test</option><option value="real" ${"real" === homeWho ? "selected" : ""}>Real homes</option><option value="test" ${"test" === homeWho ? "selected" : ""}>Test homes</option></select>
+        <select class="input sm" id="h-host"><option value="all">Every poster</option>${[["landlord", "Landlords"], ["agent", "Agents"], ["sublet", "Sublets"]].map(([k, l]) => `<option value="${k}" ${k === homeHost ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <select class="input sm" id="h-area"><option value="all">Every area</option>${Object.entries(AREAS).map(([k, l]) => `<option value="${k}" ${k === homeArea ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>
+        <button class="btn small" id="h-csv">Export CSV</button>
+      </div>
+      <div id="h-bulk"></div>
       <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
+    $("#h-who").onchange = (e) => { homeWho = e.target.value; load(); };
+    $("#h-host").onchange = (e) => { homeHost = e.target.value; load(); };
+    $("#h-area").onchange = (e) => { homeArea = e.target.value; load(); };
     $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { homeStatus = b.dataset.f; VIEWS.listings(); }));
     let timer;
     $("#q").oninput = (e) => { clearTimeout(timer); timer = setTimeout(() => { homeQuery = e.target.value; load(); }, 250); };
     const review = can("listings.review");
     const pin = can("listings.pin");
+    let shownHomes = [];
+    $("#h-csv").onclick = () => shownHomes.length ? downloadFile(`colivease-homes-${stamp()}.csv`, toCsv([[({ l }) => l.id, "Home ID"], [({ l }) => txt(l.title), "Title"], [({ l }) => l.email, "Poster"], [({ l }) => l.hostKind, "Poster kind"], [({ l }) => (l.test ? "test" : "real"), "Type"], [({ l }) => l.district, "Area"], [({ l }) => l.price, "Price"], [({ h }) => h.status, "Status"], [({ h }) => (h.pinned ? "yes" : ""), "Pinned"], [({ h }) => (h.expiresAt ? day(h.expiresAt) : ""), "Expires"], [({ l }) => count(l.photos), "Photos"], [({ h }) => h.reports, "Open reports"]], shownHomes)) : toast("Nothing to export");
+    const homeBulk = async (action, extra = {}) => {
+      const ids = [...homeSel];
+      if (!ids.length) return;
+      let note = "";
+      if (["reject", "hide"].includes(action)) {
+        const r = await dialog({ title: "reject" === action ? `Reject ${plural(ids.length, "home")}?` : `Take ${plural(ids.length, "home")} down?`, fields: [{ name: "note", label: "Reason (the hosts see this)", required: true }], confirm: "reject" === action ? "Reject" : "Take down", danger: true });
+        if (!r) return;
+        note = r.note;
+      }
+      try {
+        const r = await api("POST", "/api/admin/listings/bulk", { ids, action, note, ...extra });
+        const bad = (r.results || []).filter((x) => !x.ok);
+        toast(bad.length ? `${r.done} done, ${bad.length} not changed: ${bad[0].error}` : `Done for ${plural(r.done, "home")}`);
+        homeSel.clear();
+        load();
+        refreshCounts();
+      } catch (e) { toast(e.message); }
+    };
+    const drawHomeBulk = () => {
+      const n = homeSel.size;
+      $("#h-bulk").innerHTML = n ? `<div class="bulkbar"><b>${plural(n, "home")} selected</b>${review ? `<button class="btn" data-hb="approve">Approve</button><button class="btn" data-hb="show">Put live</button><button class="btn" data-hb="hide">Take down</button><button class="btn" data-hb="reject">Reject</button>` : ""}${pin ? `<button class="btn" data-hb="pin">Pin 30 d</button><button class="btn" data-hb="unpin">Unpin</button>` : ""}<button class="btn" data-hb="clear" style="margin-left:auto">Clear</button></div>` : "";
+      $("#h-bulk").querySelectorAll("[data-hb]").forEach((b) => (b.onclick = () => ("clear" === b.dataset.hb ? (homeSel.clear(), load()) : homeBulk(b.dataset.hb, "pin" === b.dataset.hb ? { days: 30 } : {}))));
+    };
     async function load() {
-      const { listings = [] } = await api("GET", `/api/admin/listings?q=${enc(homeQuery)}&status=${SERVER_STATUS.has(homeStatus) ? homeStatus : "all"}`);
-      const rows = listings.map((l) => ({ l, h: homeInfo(l) })).filter(({ l, h }) => ("all" === homeStatus ? true : "pinned" === homeStatus ? h.pinned : "expired" === homeStatus ? h.expired : "edited" === homeStatus ? Boolean(l.editedAt) : h.status === homeStatus));
+      const { listings = [] } = await api("GET", `/api/admin/listings?q=${enc(homeQuery)}&status=${SERVER_STATUS.has(homeStatus) ? homeStatus : "all"}&test=${homeWho}&host=${homeHost}&district=${homeArea}`);
+      const rows = listings.map((l) => ({ l, h: homeInfo(l) })).filter(({ l, h }) => ("all" === homeStatus ? true : "pinned" === homeStatus ? h.pinned : "expired" === homeStatus ? h.expired : "edited" === homeStatus ? Boolean(l.editedAt) : h.status === homeStatus))
+        // The same filters again in case an older server ignores them.
+        .filter(({ l }) => ("all" === homeWho || ("test" === homeWho) === Boolean(l.test)) && ("all" === homeHost || (l.hostKind || l.poster) === homeHost) && ("all" === homeArea || l.district === homeArea));
+      shownHomes = rows;
+      const ids = new Set(rows.map(({ l }) => l.id));
+      homeSel = new Set([...homeSel].filter((x) => ids.has(x)));
       $("#tbl").innerHTML = rows.length
-        ? `<table><thead><tr><th>Home</th><th>Posted by</th><th>Price</th><th>Status</th><th>Pin & expiry</th><th></th></tr></thead><tbody>${rows
-            .map(({ l, h }) => `<tr data-id="${esc(l.id)}"><td><b>${esc(txt(l.title) || "(no title)")}</b><span class="sub">${esc([l.district, txt(l.area)].filter(Boolean).join(" · "))} · ${plural(count(l.photos), "photo")} · posted ${day(l.postedAt || l.createdAt || l.updatedAt)}</span></td><td>${esc(l.email || l.hostName || "")}<span class="sub">${esc({ landlord: "Landlord", agent: "Agent", sublet: "Sublet" }[l.hostKind || l.poster] || l.hostKind || l.poster || "")}${l.test ? ` · <span class="tag blue">Test</span>` : ""}</span></td><td>${priceText(l)}</td><td>${statusTag(h)}${"draft" === h.status ? `<span class="sub">${count(l.photos) < 3 ? "Needs 3 photos" : "agent" === l.hostKind ? "Agent hasn't added the name renters see" : "Landlord not approved yet"}</span>` : ""}${l.editedAt ? `<span class="sub"><span class="tag amber">Edited since approval · ${ago(l.editedAt)}</span></span>` : ""}${h.reports ? `<span class="sub">${plural(h.reports, "report")}</span>` : ""}${h.note ? `<span class="sub">${esc(h.note)}</span>` : ""}</td><td>${h.pinned ? `<span class="tag blue">${pinText(h)}</span>` : `<span class="hint">${pinText(h)}</span>`}<span class="sub">${expiryText(h)}</span></td><td><div class="row">${
+        ? `<table><thead><tr><th class="sel"><input type="checkbox" id="h-all" ${rows.every(({ l }) => homeSel.has(l.id)) ? "checked" : ""} aria-label="Select all"></th><th>Home</th><th>Posted by</th><th>Price</th><th>Status</th><th>Pin & expiry</th><th></th></tr></thead><tbody>${rows
+            .map(({ l, h }) => `<tr data-id="${esc(l.id)}"><td class="sel"><input type="checkbox" data-hsel ${homeSel.has(l.id) ? "checked" : ""} aria-label="Select"></td><td><b>${esc(txt(l.title) || "(no title)")}</b><span class="sub">${esc([l.district, txt(l.area)].filter(Boolean).join(" · "))} · ${plural(count(l.photos), "photo")} · posted ${day(l.postedAt || l.createdAt || l.updatedAt)}</span></td><td>${esc(l.email || l.hostName || "")}<span class="sub">${esc({ landlord: "Landlord", agent: "Agent", sublet: "Sublet" }[l.hostKind || l.poster] || l.hostKind || l.poster || "")}${l.test ? ` · <span class="tag blue">Test</span>` : ""}</span></td><td>${priceText(l)}</td><td>${statusTag(h)}${"draft" === h.status ? `<span class="sub">${count(l.photos) < 3 ? "Needs 3 photos" : "agent" === l.hostKind ? "Agent hasn't added the name renters see" : "Landlord not approved yet"}</span>` : ""}${l.editedAt ? `<span class="sub"><span class="tag amber">Edited since approval · ${ago(l.editedAt)}</span></span>` : ""}${h.reports ? `<span class="sub">${plural(h.reports, "report")}</span>` : ""}${h.note ? `<span class="sub">${esc(h.note)}</span>` : ""}</td><td>${h.pinned ? `<span class="tag blue">${pinText(h)}</span>` : `<span class="hint">${pinText(h)}</span>`}<span class="sub">${expiryText(h)}</span></td><td><div class="row">${
               review && l.editedAt ? `<button class="btn small primary" data-checked>Mark checked</button>` : ""}${
-              review ? ("draft" === h.status ? ""
+              review ? ("draft" === h.status ? (count(l.photos) >= 3 ? `<button class="btn small" data-force title="Lists it although the host isn't approved yet">List anyway</button>` : "")
                 : "pending" === h.status ? `<button class="btn small primary" data-approve>Approve</button><button class="btn small" data-reject>Reject</button>`
                 : "auto_hidden" === h.status ? `<button class="btn small primary" data-show>Restore</button><button class="btn small" data-hide>Keep hidden</button>`
                 : "visible" === h.status ? `<button class="btn small" data-hide>Take down</button>` : `<button class="btn small" data-show>Put live</button>`) : ""}${
@@ -820,6 +1080,12 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
         const post = async (body, msg) => { try { await api("POST", `/api/admin/listings/${enc(id)}`, body); toast(msg); load(); refreshCounts(); } catch (e) { toast(e.message); } };
         on("[data-approve]", () => post({ status: "visible", note: "" }, "Approved. The poster has been told."));
         on("[data-checked]", () => post({ checked: true }, "Marked as checked"));
+        on("[data-force]", async () => {
+          if (!(await dialog({ title: "List this home anyway?", body: `<p class="hint">It has its 3 photos but wasn't sent for review (the landlord isn't approved yet, or the agent hasn't given a name). It goes live now and the poster is told. This is recorded.</p>`, confirm: "List it" }))) return;
+          post({ status: "visible", note: "", force: true }, "Listed. The poster has been told.");
+        });
+        const sel = tr.querySelector("[data-hsel]");
+        if (sel) sel.onchange = (e) => { e.target.checked ? homeSel.add(id) : homeSel.delete(id); drawHomeBulk(); };
         on("[data-reject]", async () => {
           const r = await dialog({ title: "Reject this home?", body: `<p class="hint">The poster gets your reason and can fix it and send it again. If they paid for a pin, it's refunded in full to their original payment (App Store purchases come back as a pin credit, since only Apple can refund those).</p>`, fields: [{ name: "note", label: "Reason (the poster sees this)", required: true, placeholder: "e.g. fewer than 3 real photos, price looks wrong, no move-in date" }], confirm: "Reject" });
           if (r) post({ status: "rejected", note: r.note, reason: r.note }, "Rejected. The poster has been told.");
@@ -846,6 +1112,9 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
           try { await api("DELETE", `/api/admin/listings/${enc(id)}?reason=${enc(r.reason)}`); toast("Deleted"); load(); refreshCounts(); } catch (e) { toast(e.message); }
         });
       });
+      const all = $("#h-all");
+      if (all) all.onchange = () => { rows.forEach(({ l }) => (all.checked ? homeSel.add(l.id) : homeSel.delete(l.id))); $("#tbl").querySelectorAll("[data-hsel]").forEach((c) => (c.checked = all.checked)); drawHomeBulk(); };
+      drawHomeBulk();
     }
     await load();
   };
@@ -1247,54 +1516,129 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     });
   };
 
-  // Test accounts: made in bulk, invisible to real accounts, and usable through "Open as this account".
+  // Test accounts: made in bulk with presets (member, approved landlord, licensed agent; membership, verified badge,
+  // communities, areas, avatar, sample homes), unlimited, invisible to real accounts. Open one, or many side by side.
+  let testerSel = new Set();
+  let testerFilter = "all";
   VIEWS.testers = async () => {
-    $("#main").innerHTML = `${page("Test accounts", "Test accounts are only visible to other test accounts and staff.")}
-      <form class="card panel" id="mk" style="display:grid;gap:12px;margin-bottom:14px"><h3 style="margin:0">Create test accounts</h3>
-        <div class="row" style="align-items:flex-end">
-          <label class="field">How many<input class="input sm num" name="count" type="number" min="1" max="50" value="5" required></label>
-          <label class="field">Name prefix<input class="input sm" name="namePrefix" value="Tester" maxlength="30" required style="width:180px"></label>
-          <label class="field">Kind<select class="input sm" name="kind"><option value="member">Member</option><option value="agent">Agent</option></select></label>
-          <button class="btn primary">Create</button>
+    const write = can("testers.write");
+    const signin = can("testers.signin");
+    $("#main").innerHTML = `${page("Test accounts", "Only other test accounts and staff ever see them. They're unlimited: no live-home, team, invite or daily limits, credits never run out, and buying anything is free. Opening one never signs you out of your own ColivEase account: each tab or frame is that account only.", `<button class="btn" id="t-csv">Export CSV</button>`)}
+      ${write ? `<form class="card panel" id="mk" style="display:grid;gap:14px;margin-bottom:14px"><h3 style="margin:0">Create test accounts</h3>
+        <div class="form-grid">
+          <label class="field">How many (1–50)<input class="input sm num" name="count" type="number" min="1" max="50" value="5" required></label>
+          <label class="field">Kind<select class="input sm" name="kind" id="mk-kind"><option value="member">Member (renter)</option><option value="landlord">Landlord (approved)</option><option value="agent">Agent (licensed)</option></select></label>
+          <label class="field" id="mk-plan" hidden>Agent plan<select class="input sm" name="agentPlan"><option value="agent10">10 live homes</option><option value="agent5">5 live homes</option></select></label>
+          <label class="field" id="mk-tier">Membership<select class="input sm" name="membership"><option value="">None</option><option value="gold">Gold</option><option value="diamond">Diamond</option></select></label>
+          <label class="field">Membership days (0 = no end)<input class="input sm num" name="membershipDays" type="number" min="0" max="3650" value="0"></label>
+          <label class="field">Sample homes each<select class="input sm" name="listings"><option value="0">None</option><option value="1">1 home</option><option value="2">2 homes</option><option value="3">3 homes</option></select></label>
+          <label class="field">Name prefix (optional)<input class="input sm" name="namePrefix" maxlength="30" placeholder="Realistic names" style="width:100%"></label>
         </div>
-        <span class="hint">No real email needed. They look exactly like normal accounts; their people and homes are hidden from real accounts.</span>
-      </form>
+        <div class="row"><label class="toggle"><input type="checkbox" name="verified">Verified badge</label><label class="toggle"><input type="checkbox" name="avatar" checked>Cartoon avatar</label><label class="toggle"><input type="checkbox" name="approveHomes" checked>Sample homes go live at once</label></div>
+        <div><span class="hint">Communities (languages; none picked: English plus one more)</span><div class="pick" id="mk-langs">${Object.entries(LANG).map(([k, l]) => `<label><input type="checkbox" value="${k}">${esc(l)}</label>`).join("")}</div></div>
+        <div><span class="hint">Areas (none picked: two different ones each)</span><div class="pick" id="mk-areas">${Object.entries(AREAS).map(([k, l]) => `<label><input type="checkbox" value="${k}">${esc(l)}</label>`).join("")}</div></div>
+        <div class="row"><button class="btn primary">Create</button><span class="hint" id="mk-state">Realistic names, ages, budgets, move-in dates and bios; homes use the website's sample photos.</span></div>
+      </form>` : ""}
+      <div class="chips">${[["all", "All"], ["member", "Members"], ["landlord", "Landlords"], ["agent", "Agents"], ["restricted", "Restricted"]].map(([k, l]) => `<button class="chip ${k === testerFilter ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
+      <div id="bulk"></div>
       <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
-    $("#mk").onsubmit = async (e) => {
+    $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { testerFilter = b.dataset.f; VIEWS.testers(); }));
+    const kindSel = $("#mk-kind");
+    if (kindSel) kindSel.onchange = () => { $("#mk-plan").hidden = "agent" !== kindSel.value; $("#mk-tier").hidden = "agent" === kindSel.value; };
+    if ($("#mk")) $("#mk").onsubmit = async (e) => {
       e.preventDefault();
       const f = Object.fromEntries(new FormData(e.target));
       const n = Math.max(1, Math.min(50, Number(f.count) || 1));
-      const btn = e.target.querySelector("button");
+      const picked = (sel) => [...document.querySelectorAll(`${sel} input`)].filter((c) => c.checked).map((c) => c.value);
+      const btn = e.target.querySelector("button.primary");
       btn.disabled = true;
-      try { const r = await api("POST", "/api/admin/testers", { count: n, namePrefix: f.namePrefix.trim() || "Tester", kind: f.kind }); toast(`Created ${plural(count(r.created ?? r.testers ?? r.accounts) || r.count || n, "test account")}`); load(); } catch (er) { toast(er.message); } finally { btn.disabled = false; }
+      $("#mk-state").textContent = `Creating ${plural(n, "test account")}… (with homes and avatars this can take a minute)`;
+      try {
+        const r = await api("POST", "/api/admin/testers", {
+          count: n, kind: f.kind, agentPlan: f.agentPlan, membership: f.membership || null, membershipDays: Number(f.membershipDays) || 0,
+          listings: Number(f.listings) || 0, namePrefix: (f.namePrefix || "").trim(), verified: "on" === f.verified, avatar: "on" === f.avatar, approveHomes: "on" === f.approveHomes,
+          languages: picked("#mk-langs"), areas: picked("#mk-areas"),
+        });
+        const made = r.created || [];
+        toast(`Created ${plural(made.length || n, "test account")}`);
+        $("#mk-state").textContent = `Created ${plural(made.length, "account")}${made.some((m) => m.homes) ? `, ${plural(made.reduce((x, m) => x + (m.liveHomes || 0), 0), "live home")}` : ""}.${(r.warnings || []).length ? ` ${r.warnings.join(" ")}` : ""}`;
+        load();
+      } catch (er) { toast(er.message); $("#mk-state").textContent = er.message; } finally { btn.disabled = false; }
+    };
+    let list = [];
+    const selected = () => list.filter((t) => testerSel.has(t.id));
+    const bulk = async (action, extra, msg, confirmText) => {
+      const ids = selected().map((t) => t.id);
+      if (!ids.length) return;
+      if (confirmText && !(await dialog({ title: confirmText, body: `<p class="hint">${plural(ids.length, "test account")}.</p>`, confirm: "Go", danger: ["delete", "reset"].includes(action) }))) return;
+      try { const r = await api("POST", "/api/admin/testers/bulk", { ids, action, ...extra }); const bad = (r.results || []).filter((x) => !x.ok); toast(bad.length ? `${msg}: ${r.done} done, ${bad.length} failed (${bad[0].error})` : `${msg}: ${plural(r.done ?? ids.length, "account")}`); if ("delete" === action) testerSel.clear(); load(); } catch (e) { toast(e.message); }
+    };
+    const openMany = async (asTabs) => {
+      const ids = selected().map((t) => t.id);
+      if (!ids.length) return toast("Pick test accounts first");
+      if (ids.length > 12 && !asTabs && !(await dialog({ title: `Open ${ids.length} app windows at once?`, body: `<p class="hint">Each frame runs the whole app and polls the server. More than 12 can make this browser slow.</p>`, confirm: "Open them" }))) return;
+      try { const sessions = await testerSessions(ids, asTabs ? "tabs" : "console"); asTabs ? openTabsFallback(sessions) : openConsole(sessions); } catch (e) { toast(e.message); }
+    };
+    const drawBulk = () => {
+      const n = selected().length;
+      $("#bulk").innerHTML = n
+        ? `<div class="bulkbar"><b>${n} selected</b>
+          ${signin ? `<button class="btn" data-b="open">Open ${n} side by side</button><button class="btn" data-b="tabs">Open as tabs</button>` : ""}
+          ${write ? `<button class="btn" data-b="gold">Gold 30 d</button><button class="btn" data-b="diamond">Diamond 30 d</button><button class="btn" data-b="nomember">No membership</button><button class="btn" data-b="ver">Verified on</button><button class="btn" data-b="unver">Verified off</button><button class="btn" data-b="restrict">Restrict…</button><button class="btn" data-b="signout">Sign out</button><button class="btn danger" data-b="reset">Reset</button><button class="btn danger" data-b="delete">Delete</button>` : ""}
+          <button class="btn" data-b="clear" style="margin-left:auto">Clear</button></div>`
+        : "";
+      const on = (k, fn) => { const b = $(`#bulk [data-b="${k}"]`); if (b) b.onclick = fn; };
+      on("open", () => openMany(false));
+      on("tabs", () => openMany(true));
+      on("gold", () => bulk("grant", { tier: "gold", tierDays: 30 }, "Gold for 30 days"));
+      on("diamond", () => bulk("grant", { tier: "diamond", tierDays: 30 }, "Diamond for 30 days"));
+      on("nomember", () => bulk("revoke", { tier: "free" }, "Membership removed"));
+      on("ver", () => bulk("grant", { verified: true }, "Verified"));
+      on("unver", () => bulk("revoke", { verified: false }, "Verified badge removed"));
+      on("signout", () => bulk("signout", {}, "Signed out"));
+      on("reset", () => bulk("reset", {}, "Reset", "Reset these test accounts? Their chats, teams, applications, invites, blocks and notifications are removed; profiles, homes and plans stay."));
+      on("delete", () => bulk("delete", {}, "Deleted", "Delete these test accounts for good?"));
+      on("restrict", async () => {
+        const r = await dialog({ title: "Restrict test accounts", body: `<div class="pick">${RESTRICT.map(([k, l]) => `<label><input type="checkbox" name="r_${k}">${esc(l)}</label>`).join("")}</div><p class="hint">Nothing ticked lifts every restriction.</p>`, confirm: "Save" });
+        if (!r) return;
+        bulk("restrict", { restrictions: Object.keys(r).filter((k) => k.startsWith("r_")).map((k) => k.slice(2)) }, "Restrictions saved");
+      });
+      on("clear", () => { testerSel.clear(); draw(); });
+    };
+    const KINDTAG = (t) => ("agent" === t.kind ? `<span class="tag amber">Agent</span>` : "landlord" === t.mode || "approved" === t.landlordStatus ? `<span class="tag green">Landlord</span>` : `<span class="tag">Member</span>`);
+    const draw = () => {
+      const rows = list.filter((t) => "all" === testerFilter || ("agent" === testerFilter ? "agent" === t.kind : "landlord" === testerFilter ? "agent" !== t.kind && ("landlord" === t.mode || "approved" === t.landlordStatus) : "member" === testerFilter ? "agent" !== t.kind && "approved" !== t.landlordStatus && "landlord" !== t.mode : "restricted" === testerFilter ? t.restrictions?.length || t.suspended : true));
+      $("#tbl").innerHTML = rows.length
+        ? `<table><thead><tr><th class="sel"><input type="checkbox" id="sel-all" ${rows.every((t) => testerSel.has(t.id)) ? "checked" : ""} aria-label="Select all"></th><th>Test account</th><th>Kind</th><th>Community</th><th>Plan & badges</th><th>Homes</th><th>Last active</th><th></th></tr></thead><tbody>${rows
+            .map((t) => {
+              const e = t.entitlements || {};
+              const plan = t.agentPlan || e.agentPlan;
+              return `<tr data-id="${esc(t.id)}"><td class="sel"><input type="checkbox" data-sel ${testerSel.has(t.id) ? "checked" : ""} aria-label="Select"></td><td><b>${esc(txt(t.name) || "(no name)")}</b><span class="sub">${esc(t.email || t.id)}</span></td><td>${KINDTAG(t)}${t.suspended ? ` <span class="tag red">Suspended</span>` : ""}${t.restrictions?.length ? ` <span class="tag amber">Restricted</span>` : ""}</td><td>${esc((t.languages || []).map((k) => LANG[k] || k).join(", ") || "—")}</td><td><div class="tags">${tierTag(tierOf(t)) || ""}${PLAN[plan] ? `<span class="tag green">${PLAN[plan]}</span>` : ""}${(e.badges || []).includes("verified") || e.verifiedUntil > Date.now() ? `<span class="tag blue">Verified</span>` : ""}${TIER[tierOf(t)] || PLAN[plan] ? "" : `<span class="hint">Free</span>`}</div></td><td>${count(t.listings ?? t.homes)}</td><td>${ago(t.lastActive)}</td><td><div class="row">${signin ? `<button class="btn small primary" data-act>Open as</button>` : ""}${can("users.read") ? `<button class="btn small ghost" data-open>Manage</button>` : ""}</div></td></tr>`;
+            })
+            .join("")}</tbody></table>`
+        : `<div class="empty">${list.length ? "None here." : "No test accounts yet. Create some above."}</div>`;
+      $("#tbl").querySelectorAll("tr[data-id]").forEach((tr) => {
+        const t = list.find((x) => x.id === tr.dataset.id);
+        tr.querySelector("[data-sel]").onchange = (e) => { e.target.checked ? testerSel.add(t.id) : testerSel.delete(t.id); drawBulk(); };
+        const a = tr.querySelector("[data-act]");
+        if (a) a.onclick = () => actAs(t.id);
+        const o = tr.querySelector("[data-open]");
+        if (o) o.onclick = () => openAccount(t.id);
+      });
+      const all = $("#sel-all");
+      if (all) all.onchange = () => { rows.forEach((t) => (all.checked ? testerSel.add(t.id) : testerSel.delete(t.id))); draw(); };
+      drawBulk();
     };
     async function load() {
       // A failed list read shows here, so the create form above stays usable.
       let r;
       try { r = await api("GET", "/api/admin/testers"); } catch (e) { $("#tbl").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
-      const list = r.testers || r.accounts || [];
-      // Giving answers with the account's details, so the server also needs users.read.
-      const g = can("plans.grant") && can("users.read"), b = can("badges.grant") && can("users.read");
-      $("#tbl").innerHTML = list.length
-        ? `<table><thead><tr><th>Test account</th><th>Kind</th><th>Created</th><th>Plan</th><th>Homes</th><th></th></tr></thead><tbody>${list
-            .map((t, i) => {
-              const e = t.entitlements || {};
-              const plan = t.agentPlan || e.agentPlan;
-              return `<tr data-i="${i}"><td><b>${esc(txt(t.name) || "(no name)")}</b><span class="sub">${esc(t.email || t.id)}</span></td><td>${"agent" === t.kind ? `<span class="tag amber">Agent</span>` : `<span class="tag">Member</span>`}</td><td>${day(t.createdAt)}</td><td><div class="tags">${tierTag(tierOf(t)) || ""}${PLAN[plan] ? `<span class="tag green">${PLAN[plan]}</span>` : ""}${TIER[tierOf(t)] || PLAN[plan] ? "" : "Free"}</div></td><td>${count(t.listings ?? t.liveListings ?? e.liveListings)}</td><td><div class="row"><button class="btn small primary" data-act>Open as this account</button>${
-                g ? ("agent" === t.kind ? `<button class="btn small" data-g='{"agentPlan":"agent10","agentDays":30}' data-msg="Agent 10 plan for 30 days">Agent 10 · 30 d</button>` : `<button class="btn small" data-g='{"tier":"gold","tierDays":30}' data-msg="Gold for 30 days">Gold 30 d</button><button class="btn small" data-g='{"tier":"diamond","tierDays":30}' data-msg="Diamond for 30 days">Diamond 30 d</button>`) : ""}${
-                b ? `<button class="btn small" data-g='{"verifiedYears":3}' data-msg="Verified for 3 years">Verified</button>` : ""}${
-                can("users.read") ? `<button class="btn small ghost" data-open>Manage</button>` : ""}</div></td></tr>`;
-            })
-            .join("")}</tbody></table>`
-        : `<div class="empty">No test accounts yet. Create some above.</div>`;
-      $("#tbl").querySelectorAll("tr[data-i]").forEach((tr) => {
-        const t = list[tr.dataset.i];
-        tr.querySelector("[data-act]").onclick = () => actAs(t.id);
-        tr.querySelectorAll("[data-g]").forEach((btn) => (btn.onclick = async () => { if (await grantTo(t.id, JSON.parse(btn.dataset.g), `${btn.dataset.msg}: given`)) load(); }));
-        const o = tr.querySelector("[data-open]");
-        if (o) o.onclick = () => openAccount(t.id);
-      });
+      list = r.testers || r.accounts || [];
+      const ids = new Set(list.map((t) => t.id));
+      testerSel = new Set([...testerSel].filter((x) => ids.has(x)));
+      draw();
     }
+    $("#t-csv").onclick = () => list.length ? downloadFile(`colivease-test-accounts-${stamp()}.csv`, toCsv([["id", "Account ID"], ["email", "Email"], [(t) => txt(t.name), "Name"], ["kind", "Kind"], ["mode", "Mode"], [(t) => (t.languages || []).join(" "), "Communities"], [(t) => t.entitlements?.tier || "free", "Membership"], [(t) => t.entitlements?.agentPlan || "", "Agent plan"], ["homes", "Homes"], [(t) => fmt(t.lastActive), "Last active"]], list)) : toast("Nothing to export");
     await load();
   };
 
@@ -1394,13 +1738,359 @@ td .sub, .item .sub { display: block; color: var(--muted); font-size: 12px; }
     });
   };
 
-  // Audit log
+  // Audit log: filters (action, staff member, target, dates, reason text) and CSV.
+  const auditF = { action: "", admin: "", target: "", from: "", to: "", q: "", limit: 300 };
   VIEWS.audit = async () => {
-    loading();
-    const { entries } = await api("GET", "/api/admin/audit?limit=300");
-    $("#main").innerHTML = `${page("Audit log", "Every admin change and every chat opened: who, when and why")}
-      <div class="card tablewrap">${entries.length ? `<table><thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th><th>Reason</th><th>Details</th></tr></thead><tbody>${entries.map((e) => `<tr><td>${fmt(e.at)}</td><td>${esc(e.admin || e.admin_id)}</td><td>${esc(ACTION[e.action] || e.action)}</td><td style="word-break:break-all">${esc(e.target || "—")}</td><td>${esc(e.reason || "—")}</td><td style="max-width:280px;word-break:break-all"><span class="sub">${esc(e.detail ? JSON.stringify(e.detail) : "")}</span></td></tr>`).join("")}</tbody></table>` : `<div class="empty">Nothing recorded yet.</div>`}</div>`;
+    const groups = [...new Set(Object.keys(ACTION).map((k) => k.split(".")[0]))].sort();
+    $("#main").innerHTML = `${page("Audit log", "Every admin change and every chat opened: who, when and why", `<button class="btn" id="a-csv">Export CSV</button>`)}
+      <form class="card panel" id="a-f" style="margin-bottom:14px"><div class="form-grid">
+        <label class="field">Action<select class="input sm" name="action"><option value="">Any action</option>${groups.map((g) => `<option value="${g}." ${auditF.action === `${g}.` ? "selected" : ""}>${esc(g)} (all)</option>`).join("")}${Object.entries(ACTION).map(([k, l]) => `<option value="${esc(k)}" ${auditF.action === k ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></label>
+        <label class="field">Staff member (email)<input class="input sm" name="admin" value="${esc(auditF.admin)}" placeholder="name@colivease.ca"></label>
+        <label class="field">Target (account or home ID)<input class="input sm" name="target" value="${esc(auditF.target)}" placeholder="uuid…"></label>
+        <label class="field">From<input class="input sm" name="from" type="date" value="${esc(auditF.from)}"></label>
+        <label class="field">To<input class="input sm" name="to" type="date" value="${esc(auditF.to)}"></label>
+        <label class="field">Reason contains<input class="input sm" name="q" value="${esc(auditF.q)}"></label>
+        <label class="field">Rows<select class="input sm" name="limit">${[100, 300, 1000, 2000].map((n) => `<option ${n === Number(auditF.limit) ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+        <div class="row"><button class="btn primary">Filter</button><button class="btn ghost" type="button" id="a-clear">Clear</button></div>
+      </div></form>
+      <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
+    let entries = [];
+    $("#a-f").onsubmit = (e) => { e.preventDefault(); Object.assign(auditF, Object.fromEntries(new FormData(e.target))); load(); };
+    $("#a-clear").onclick = () => { Object.assign(auditF, { action: "", admin: "", target: "", from: "", to: "", q: "", limit: 300 }); VIEWS.audit(); };
+    $("#a-csv").onclick = () => entries.length ? downloadFile(`colivease-audit-${stamp()}.csv`, toCsv([[(e) => new Date(e.at).toISOString(), "When (UTC)"], [(e) => e.admin || e.admin_id, "Staff"], ["action", "Action"], [(e) => ACTION[e.action] || "", "Meaning"], ["target", "Target"], ["reason", "Reason"], [(e) => (e.detail ? JSON.stringify(e.detail) : ""), "Details"]], entries)) : toast("Nothing to export");
+    async function load() {
+      const ms = (d, end) => (d ? new Date(`${d}T${end ? "23:59:59" : "00:00:00"}`).getTime() : "");
+      const qs = new URLSearchParams({ limit: auditF.limit || 300, action: auditF.action, admin: auditF.admin.trim(), target: auditF.target.trim(), since: ms(auditF.from), until: ms(auditF.to, true), q: auditF.q.trim() });
+      for (const [k, v] of [...qs]) if (!v) qs.delete(k);
+      try { ({ entries = [] } = await api("GET", `/api/admin/audit?${qs}`)); } catch (e) { $("#tbl").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+      $("#tbl").innerHTML = entries.length ? `<table><thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th><th>Reason</th><th>Details</th></tr></thead><tbody>${entries.map((e) => `<tr><td>${fmt(e.at)}</td><td>${esc(e.admin || e.admin_id)}</td><td>${esc(ACTION[e.action] || e.action)}<span class="sub">${esc(e.action)}</span></td><td style="word-break:break-all">${e.target ? `<a href="#" data-t="${esc(e.target)}">${esc(e.target)}</a>` : "—"}</td><td>${esc(e.reason || "—")}</td><td style="max-width:280px;word-break:break-all"><span class="sub" title="${esc(e.detail ? JSON.stringify(e.detail) : "")}">${esc(e.detail ? (JSON.stringify(e.detail).length > 160 ? `${JSON.stringify(e.detail).slice(0, 160)}…` : JSON.stringify(e.detail)) : "")}</span></td></tr>`).join("")}</tbody></table>` : `<div class="empty">Nothing matches.</div>`;
+      $("#tbl").querySelectorAll("[data-t]").forEach((a) => (a.onclick = (ev) => { ev.preventDefault(); auditF.target = a.dataset.t; VIEWS.audit(); }));
+    }
+    await load();
   };
+
+  // ---- Messages: chats with users as "ColivEase Support" (support.chat). The user sees it in their normal Messages
+  // list and replies there; every message staff send is recorded with who sent it.
+  let supportOpen = null, supportFilter = "all", supportTimer = null;
+  async function startSupport(accountId, label) {
+    const r = await dialog({ title: `Message ${label || "this user"} as ColivEase Support`, body: `<p class="hint">They see it in their Messages, from “ColivEase Support”, and can reply there.</p>`, fields: [{ name: "text", label: "Message", type: "textarea", required: true }], confirm: "Send" });
+    if (!r) return;
+    try {
+      const { thread } = await api("POST", "/api/admin/support/start", { accountId, text: r.text });
+      toast("Sent");
+      closeDrawer();
+      supportOpen = thread?.id || null;
+      go("support");
+    } catch (e) { toast(e.message); }
+  }
+  function openSupport(threadId) { supportOpen = threadId; if ("support" === view) VIEWS.support(); }
+  VIEWS.support = async () => {
+    clearInterval(supportTimer);
+    $("#main").innerHTML = `${page("Messages", "Chats with users as ColivEase Support. Users see them in their normal Messages; Support can't be blocked or reported and is always open.", `<button class="btn primary" id="s-new">New message</button>`)}
+      <div class="chips">${[["all", "All"], ["unread", "Waiting for a reply"], ["real", "Real accounts"], ["test", "Test accounts"]].map(([k, l]) => `<button class="chip ${k === supportFilter ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
+      <div class="inbox"><div class="card threads" id="s-list"><div class="empty">Loading…</div></div><div class="card conv" id="s-conv"><div class="empty">Pick a chat, or start one with “New message”.</div></div></div>`;
+    $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { supportFilter = b.dataset.f; VIEWS.support(); }));
+    $("#s-new").onclick = async () => {
+      const r = await dialog({ title: "New message as ColivEase Support", fields: [{ name: "who", label: "Their email, name or account ID", required: true }] });
+      if (!r) return;
+      try {
+        const { accounts = [] } = await api("GET", `/api/admin/accounts?q=${enc(r.who.trim())}`);
+        if (!accounts.length) return toast("No account matches");
+        const exact = accounts.find((a) => String(a.email).toLowerCase() === r.who.trim().toLowerCase()) || (1 === accounts.length ? accounts[0] : null);
+        if (!exact) return toast(`${accounts.length} accounts match. Type the full email.`);
+        startSupport(exact.id, txt(exact.name) || exact.email);
+      } catch (e) { toast(e.message); }
+    };
+    let threads = [];
+    const who = (th) => esc(txt(th.user?.name) || th.user?.email || th.accountId || "Deleted user");
+    async function loadList() {
+      let r;
+      try { r = await api("GET", `/api/admin/support?filter=${supportFilter}`); } catch (e) { $("#s-list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+      threads = r.threads || [];
+      supportUnread = r.unread ?? supportUnread;
+      renderNav();
+      $("#s-list").innerHTML = threads.length ? threads.map((th) => `<div class="thread ${th.id === supportOpen ? "on" : ""}" data-th="${esc(th.id)}"><b>${who(th)}${th.test ? ` <span class="tag blue">Test</span>` : ""}</b><span>${th.unread ? `<span class="count tag amber">${th.unread}</span>` : `<span class="hint">${ago(th.lastAt)}</span>`}</span><span class="sub">${th.last ? `${"support" === th.last.from ? "You: " : ""}${esc(msgText({ text: th.last.text, from: th.last.from }))}` : "No messages yet"}</span></div>`).join("") : `<div class="empty">No Support chats yet.</div>`;
+      $("#s-list").querySelectorAll("[data-th]").forEach((d) => (d.onclick = () => { supportOpen = d.dataset.th; loadList(); loadConv(); }));
+    }
+    async function loadConv(keepDraft) {
+      if (!supportOpen) return;
+      const draft = keepDraft ? $("#s-text")?.value : "";
+      let c;
+      try { c = await api("GET", `/api/admin/support/${enc(supportOpen)}`); } catch (e) { $("#s-conv").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+      const th = c.thread || {};
+      const msgs = c.messages || [];
+      $("#s-conv").innerHTML = `<div class="row" style="justify-content:space-between"><div><h3 style="margin:0">${who(th)}</h3><span class="hint">${esc(th.user?.email || "")}${th.test ? " · test account" : ""} · ${plural(msgs.length, "message")}${th.userUnread ? ` · ${th.userUnread} not read by them yet` : ""}</span></div>${th.accountId && can("users.read") ? `<button class="btn small" id="s-acct">Account</button>` : ""}</div>
+        <div class="msgs" id="s-msgs">${msgs.map((m) => `<div class="msg ${"support" === m.from ? "me" : "system" === m.from || "system" === m.kind ? "system" : ""} ${m.deleted ? "deleted" : ""}"><span class="body">${"text" === (m.kind || "text") || "system" === m.kind ? esc(msgText(m)) : `<i>[${esc(m.kind)}]</i> ${esc(msgText(m))}`}</span><small>${"support" === m.from ? "ColivEase Support" : "system" === m.from ? "" : who(th)} · ${fmt(m.at)}</small></div>`).join("") || `<p class="hint">No messages yet.</p>`}</div>
+        <form class="reply" id="s-reply"><textarea class="input" id="s-text" rows="2" placeholder="Reply as ColivEase Support" maxlength="4000"></textarea><button class="btn primary">Send</button></form>`;
+      const box = $("#s-msgs");
+      box.scrollTop = box.scrollHeight;
+      if (draft) $("#s-text").value = draft;
+      const acct = $("#s-acct");
+      if (acct) acct.onclick = () => openAccount(th.accountId);
+      $("#s-text").onkeydown = (e) => { if ("Enter" === e.key && (e.ctrlKey || e.metaKey)) $("#s-reply").requestSubmit(); };
+      $("#s-reply").onsubmit = async (e) => {
+        e.preventDefault();
+        const text = $("#s-text").value.trim();
+        if (!text) return;
+        const btn = e.target.querySelector("button");
+        btn.disabled = true;
+        try { await api("POST", `/api/admin/support/${enc(supportOpen)}/send`, { text }); $("#s-text").value = ""; await loadConv(); loadList(); } catch (er) { toast(er.message); } finally { btn.disabled = false; }
+      };
+    }
+    await loadList();
+    if (supportOpen) await loadConv();
+    // New replies show up while the page is open.
+    supportTimer = setInterval(() => {
+      if ("support" !== view || !$("#s-list")) return clearInterval(supportTimer);
+      if ("visible" !== document.visibilityState) return;
+      loadList();
+      if (supportOpen && !$("#s-text")?.matches(":focus")) loadConv(true);
+    }, 10000);
+  };
+
+  // ---- Stress test: many test accounts at once, from this browser, against the API with each tester's own session.
+  // Safety caps: at most 50 at a time, 5 minutes, and 20 requests a second in total (up to 50 with an explicit
+  // override). The server also caps traffic from test accounts.
+  const STRESS = { maxConc: 50, maxSecs: 300, rateCap: 20, rateHard: 50 };
+  const SCEN = [
+    ["feed", "Browse the feed", "GET /feed (people, homes, teams)", 4],
+    ["inbox", "Poll messages", "GET /inbox, as the app does every few seconds", 3],
+    ["home", "Open homes", "POST /chat/listing: opens the inquiry chat of a live test home", 2],
+    ["chat", "Chat between testers", "POST /chat/start, then /chat/send", 3],
+    ["listing", "Post or update a listing", "GET /state, then PUT /state with a changed home", 1],
+    ["apply", "Apply to a home", "POST /applications", 1],
+    ["teams", "Create or join teams", "POST /teams, POST /teams/:id/join", 1],
+  ];
+  let stressRun = null;
+  const pct = (sorted, p) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))] : 0);
+  VIEWS.stress = async () => {
+    $("#main").innerHTML = `${page("Stress test", "Runs from this browser: each request goes to the ColivEase API with a test account's own session. Pick the accounts and what they do, then watch requests per second, latency and errors live.")}
+      <div class="notice" style="margin-bottom:14px"><b>Careful:</b> this hits the real backend (Supabase project ${esc(API.replace(/^https?:\/\//, "").split("/")[0])}). The Supabase organisation is close to its quota: keep runs short and small. Hard caps: ${STRESS.maxConc} accounts at a time, ${STRESS.maxSecs / 60} minutes, ${STRESS.rateCap} requests a second in total. Only test accounts take part, and their data stays invisible to real users.</div>
+      <form class="card panel" id="st-f" style="display:grid;gap:14px;margin-bottom:14px">
+        <h3 style="margin:0">Setup</h3>
+        <div class="form-grid">
+          <label class="field">Concurrency (1–${STRESS.maxConc})<input class="input sm num" name="conc" type="number" min="1" max="${STRESS.maxConc}" value="5"></label>
+          <label class="field">Duration (seconds, 10–${STRESS.maxSecs})<input class="input sm num" name="secs" type="number" min="10" max="${STRESS.maxSecs}" value="60"></label>
+          <label class="field">Requests a second (total)<input class="input sm num" name="rate" type="number" min="0.5" step="0.5" max="${STRESS.rateHard}" value="5"></label>
+          <label class="toggle"><input type="checkbox" name="over">Allow more than ${STRESS.rateCap} a second (up to ${STRESS.rateHard})</label>
+          <label class="toggle"><input type="checkbox" name="signout" checked>Sign the test accounts out afterwards</label>
+        </div>
+        <div><span class="hint">What they do (weights: how often each is picked; 0 = never)</span>
+          <div class="form-grid" style="margin-top:6px">${SCEN.map(([k, l, d, w]) => `<label class="field">${esc(l)}<input class="input sm num" name="w_${k}" type="number" min="0" max="10" value="${w}"><span class="hint">${esc(d)}</span></label>`).join("")}</div></div>
+        <div><div class="row" style="justify-content:space-between"><span class="hint">Test accounts (pick up to ${STRESS.maxConc})</span><span class="row"><button type="button" class="btn small" id="st-10">First 10</button><button type="button" class="btn small" id="st-none">None</button></span></div>
+          <div class="pick" id="st-acc" style="margin-top:8px"><span class="hint">Loading…</span></div></div>
+        <div class="row"><button class="btn primary" id="st-go">Start</button><span class="hint" id="st-msg"></span></div>
+      </form>
+      <div id="st-out"></div>`;
+    let testers = [];
+    try { testers = (await api("GET", "/api/admin/testers")).testers || []; } catch (e) { $("#st-acc").innerHTML = `<span class="hint">${esc(e.message)}</span>`; }
+    $("#st-acc").innerHTML = testers.length ? testers.map((t) => `<label><input type="checkbox" value="${esc(t.id)}">${esc(txt(t.name) || t.email)}${"agent" === t.kind ? " · agent" : ""}</label>`).join("") : `<span class="hint">No test accounts yet. Create some under Test accounts.</span>`;
+    const boxes = () => [...document.querySelectorAll("#st-acc input")];
+    $("#st-10").onclick = () => boxes().forEach((c, i) => (c.checked = i < 10));
+    $("#st-none").onclick = () => boxes().forEach((c) => (c.checked = false));
+    if (stressRun) drawStress();
+    $("#st-f").onsubmit = async (e) => {
+      e.preventDefault();
+      if (stressRun?.running) return toast("A run is still going. Stop it first.");
+      const f = Object.fromEntries(new FormData(e.target));
+      const ids = boxes().filter((c) => c.checked).map((c) => c.value);
+      if (!ids.length) return toast("Pick some test accounts");
+      if (ids.length > STRESS.maxConc) return toast(`At most ${STRESS.maxConc} test accounts`);
+      const over = "on" === f.over;
+      const cfg = {
+        conc: Math.max(1, Math.min(STRESS.maxConc, Math.floor(Number(f.conc) || 1))),
+        secs: Math.max(10, Math.min(STRESS.maxSecs, Math.floor(Number(f.secs) || 60))),
+        rate: Math.max(0.5, Math.min(over ? STRESS.rateHard : STRESS.rateCap, Number(f.rate) || 5)),
+        weights: Object.fromEntries(SCEN.map(([k]) => [k, Math.max(0, Math.min(10, Number(f[`w_${k}`]) || 0))])),
+        signout: "on" === f.signout,
+        accounts: ids.length,
+      };
+      if (!Object.values(cfg.weights).some((w) => w > 0)) return toast("Give at least one scenario a weight above 0");
+      if (over && !(await dialog({ title: `Run at up to ${cfg.rate} requests a second?`, body: `<div class="notice">That's above the usual ${STRESS.rateCap} a second. The Supabase organisation is near its quota; a high rate can use it up for everyone, real users included.</div>`, confirm: "Run it", danger: true }))) return;
+      if (!(await dialog({ title: "Start the stress test?", body: `<p class="hint">${plural(ids.length, "test account")}, ${cfg.conc} at a time, ${cfg.rate} requests a second at most, for ${cfg.secs} seconds. It writes test data (chats, applications, teams, home edits) that only test accounts see.</p>`, confirm: "Start" }))) return;
+      $("#st-msg").textContent = "Opening sessions…";
+      let sessions;
+      try { sessions = await testerSessions(ids, "stress"); } catch (er) { $("#st-msg").textContent = er.message; return toast(er.message); }
+      $("#st-msg").textContent = "";
+      runStress(cfg, sessions, testers);
+    };
+  };
+  function runStress(cfg, sessions, testers) {
+    const byId = new Map(testers.map((t) => [t.id, t]));
+    const people = sessions.map((s) => ({ ...s, kind: byId.get(s.accountId)?.kind || s.kind, homes: [], teamId: null, applied: new Set(), threads: new Map() }));
+    const run = { cfg, started: Date.now(), ends: Date.now() + cfg.secs * 1000, running: true, samples: [], perSec: new Map(), byEp: new Map(), errors: new Map(), inflight: 0, sent: 0, people, knownHomes: [], teams: [], notes: [] };
+    stressRun = run;
+    // Requests a second for everyone together: a token bucket refilled every 50 ms.
+    let tokens = 1;
+    const waiters = [];
+    const tick = setInterval(() => {
+      tokens = Math.min(Math.max(1, cfg.rate), tokens + cfg.rate / 20);
+      while (tokens >= 1 && waiters.length) { tokens -= 1; waiters.shift().res(); }
+      if (Date.now() >= run.ends) stop();
+    }, 50);
+    const slot = () => (run.running ? new Promise((res, rej) => waiters.push({ res, rej })) : Promise.reject(new Error("stopped")));
+    const record = (ep, r) => {
+      const sec = Math.floor((Date.now() - run.started) / 1000);
+      const s = run.perSec.get(sec) || { n: 0, err: 0, ms: [] };
+      s.n++;
+      s.ms.push(r.ms);
+      const bad = !(r.status >= 200 && r.status < 400);
+      if (bad) s.err++;
+      run.perSec.set(sec, s);
+      const e = run.byEp.get(ep) || { n: 0, err: 0, ms: [] };
+      e.n++;
+      e.ms.push(r.ms);
+      if (bad) e.err++;
+      run.byEp.set(ep, e);
+      if (bad) { const key = `${r.status || "network"}${r.code ? ` ${r.code}` : ""}`; run.errors.set(key, (run.errors.get(key) || 0) + 1); }
+      if (run.samples.length < 20000) run.samples.push({ t: Math.round(Date.now() - run.started), ep, status: r.status, ms: Math.round(r.ms), code: r.code || undefined });
+    };
+    const call = async (who, method, path, body, ep) => {
+      await slot();
+      run.inflight++;
+      run.sent++;
+      try { const r = await testerCall(who.token, method, `/api${path}`, body); record(ep, r); return r; } finally { run.inflight--; }
+    };
+    const pick = (list) => list[Math.floor(Math.random() * list.length)];
+    const members = people.filter((p) => "agent" !== p.kind);
+    const learnFeed = (r) => {
+      const ls = r?.json?.listings;
+      if (Array.isArray(ls)) run.knownHomes = ls.slice(0, 200).map((l) => ({ id: l.id, host: l.hostId }));
+      const ts = r?.json?.teams;
+      if (Array.isArray(ts)) run.teams = ts.filter((t) => !t.full).slice(0, 100).map((t) => t.id);
+    };
+    const ops = {
+      feed: async (me) => learnFeed(await call(me, "GET", "/feed?langs=en,zh", null, "GET /feed")),
+      inbox: async (me) => call(me, "GET", "/inbox", null, "GET /inbox"),
+      home: async (me) => {
+        const others = run.knownHomes.filter((x) => x.host !== `acct:${me.accountId}`);
+        // No home of someone else known yet: browse instead (that request also learns the homes).
+        if (!others.length) return ops.feed(me);
+        await call(me, "POST", "/chat/listing", { listingId: pick(others).id }, "POST /chat/listing");
+      },
+      chat: async (me) => {
+        if ("agent" === me.kind || members.length < 2) return ops.inbox(me);
+        const other = pick(members.filter((p) => p !== me));
+        let th = me.threads.get(other.accountId);
+        if (!th) {
+          const r = await call(me, "POST", "/chat/start", { to: `acct:${other.accountId}`, note: "Stress test hello" }, "POST /chat/start");
+          th = r.json?.thread?.id;
+          if (!th) return;
+          me.threads.set(other.accountId, th);
+          other.threads.set(me.accountId, th);
+        }
+        await call(me, "POST", "/chat/send", { threadId: th, text: `Stress test message ${new Date().toISOString().slice(11, 19)}` }, "POST /chat/send");
+      },
+      listing: async (me) => {
+        const r = await call(me, "GET", "/state", null, "GET /state");
+        const doc = r.json?.doc;
+        if (!doc) return;
+        const own = (doc.listings || []).filter((l) => ["me", "landlord"].includes(l?.hostId));
+        let listings;
+        if (own.length) {
+          const l = pick(own);
+          listings = (doc.listings || []).map((x) => (x === l ? { ...x, price: (Number(x.price) || 1000) + (Math.random() < 0.5 ? -5 : 5), updatedAt: Date.now() } : x));
+        } else {
+          listings = [...(doc.listings || []), { id: `st${Date.now().toString(36)}`, hostId: "member" === me.kind || !me.kind ? "me" : "landlord", kind: "room", title: { zh: "压力测试房源", en: "Stress test home" }, district: "downtown", price: 1000, beds: 1, baths: 1, photos: [], postedAt: Date.now(), updatedAt: Date.now() }];
+        }
+        await call(me, "PUT", "/state", { baseRev: r.json.rev, doc: { ...doc, listings }, changedKeys: ["listings"] }, "PUT /state");
+      },
+      apply: async (me) => {
+        if ("agent" === me.kind) return ops.feed(me);
+        if (!run.knownHomes.length) return ops.feed(me);
+        const open = run.knownHomes.filter((h) => h.host !== `acct:${me.accountId}` && !me.applied.has(h.id));
+        if (!open.length) return ops.inbox(me);
+        const h = pick(open);
+        me.applied.add(h.id);
+        await call(me, "POST", "/applications", { listingId: h.id, note: "Stress test application" }, "POST /applications");
+      },
+      teams: async (me) => {
+        if ("agent" === me.kind) return ops.feed(me);
+        const joinable = run.teams.filter((id) => id !== me.teamId);
+        if (me.teamId || (joinable.length && Math.random() < 0.6)) {
+          if (!joinable.length) return ops.feed(me);
+          await call(me, "POST", `/teams/${encodeURIComponent(pick(joinable))}/join`, { note: "Stress test" }, "POST /teams/:id/join");
+        } else {
+          const r = await call(me, "POST", "/teams", { name: `Stress team ${Math.floor(Math.random() * 1000)}`, emoji: "🧪", targetSize: 5, areas: ["downtown"], budget: [900, 1500], open: true }, "POST /teams");
+          if (r.json?.team?.id) { me.teamId = r.json.team.id; run.teams.push(me.teamId); }
+        }
+      },
+    };
+    const weighted = Object.entries(cfg.weights).filter(([, w]) => w > 0);
+    const total = weighted.reduce((x, [, w]) => x + w, 0);
+    const choose = () => { let r = Math.random() * total; for (const [k, w] of weighted) if ((r -= w) < 0) return k; return weighted[0][0]; };
+    const pause = (ms) => new Promise((res) => setTimeout(res, ms));
+    const worker = async (i) => {
+      while (run.running) {
+        const me = people[i % people.length];
+        const before = run.sent;
+        try { await ops[choose()](me); } catch (e) { if ("stopped" !== e?.message && run.notes.length < 50) run.notes.push(String(e?.message || e)); }
+        // Always give the page a turn; an op that sent nothing (no eligible target) waits a little longer, so a worker
+        // can never spin and freeze the tab.
+        await pause(run.sent === before ? 200 : 0);
+      }
+    };
+    function stop() {
+      if (!run.running) return;
+      run.running = false;
+      run.stoppedAt = Date.now();
+      clearInterval(tick);
+      while (waiters.length) waiters.shift().rej(new Error("stopped"));
+      if (cfg.signout) api("POST", "/api/admin/testers/sessions/revoke", { ids: people.map((p) => p.accountId) }).catch(() => {});
+      drawStress();
+      // Answers still on their way when it stopped are counted too.
+      setTimeout(() => "stress" === view && drawStress(), 2500);
+    }
+    run.stop = stop;
+    for (let i = 0; i < cfg.conc; i++) worker(i);
+    const ui = setInterval(() => { if (!run.running) clearInterval(ui); if ("stress" === view) drawStress(); }, 500);
+    drawStress();
+  }
+  function stressSummary(run) {
+    const all = run.samples.map((s) => s.ms).sort((a, b) => a - b);
+    const secs = Math.max(1, ((run.stoppedAt || Date.now()) - run.started) / 1000);
+    const last = [...run.perSec.entries()].filter(([s]) => s >= Math.floor((Date.now() - run.started) / 1000) - 10).flatMap(([, v]) => v.ms).sort((a, b) => a - b);
+    const errs = [...run.errors.values()].reduce((x, n) => x + n, 0);
+    return { requests: run.samples.length, errors: errs, errorRate: run.samples.length ? errs / run.samples.length : 0, rps: run.samples.length / secs, p50: pct(all, 50), p95: pct(all, 95), max: all[all.length - 1] || 0, p95last10s: pct(last, 95), seconds: Math.round(secs) };
+  }
+  function drawStress() {
+    const run = stressRun;
+    const out = $("#st-out");
+    if (!run || !out) return;
+    const s = stressSummary(run);
+    const left = Math.max(0, Math.round((run.ends - Date.now()) / 1000));
+    const series = [];
+    const lastSec = Math.max(...run.perSec.keys(), 0);
+    for (let i = 0; i <= lastSec; i++) { const v = run.perSec.get(i) || { n: 0, err: 0, ms: [] }; series.push({ n: v.n, err: v.err, p95: pct([...v.ms].sort((a, b) => a - b), 95) }); }
+    const W = 600, H = 120;
+    const maxN = Math.max(1, ...series.map((x) => x.n));
+    const maxMs = Math.max(100, ...series.map((x) => x.p95));
+    const x = (i) => (series.length > 1 ? (i / (series.length - 1)) * W : 0);
+    const line = (key, max) => series.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${(H - (v[key] / max) * (H - 8) - 4).toFixed(1)}`).join("");
+    const eps = [...run.byEp.entries()].map(([ep, v]) => { const ms = [...v.ms].sort((a, b) => a - b); return { ep, n: v.n, err: v.err, p50: pct(ms, 50), p95: pct(ms, 95), max: ms[ms.length - 1] || 0 }; }).sort((a, b) => b.n - a.n);
+    out.innerHTML = `<div class="card panel">
+      <div class="row" style="justify-content:space-between"><h3 style="margin:0">${run.running ? `Running · ${left}s left` : `Finished after ${s.seconds}s`}</h3>
+        <div class="row">${run.running ? `<button class="btn danger" id="st-stop">Stop</button>` : `<button class="btn" id="st-again">New run</button>`}<button class="btn" id="st-json">Export JSON</button></div></div>
+      <div class="kpis">
+        <div class="card kpi"><small>Requests a second</small><b>${s.rps.toFixed(1)}</b><span class="hint">cap ${run.cfg.rate}/s</span></div>
+        <div class="card kpi"><small>Requests</small><b>${s.requests}</b><span class="hint">${run.inflight} in flight</span></div>
+        <div class="card kpi"><small>p50 latency</small><b>${Math.round(s.p50)} ms</b></div>
+        <div class="card kpi"><small>p95 latency</small><b>${Math.round(s.p95)} ms</b><span class="hint">last 10 s: ${Math.round(s.p95last10s)} ms</span></div>
+        <div class="card kpi"><small>Errors</small><b style="color:${s.errors ? "var(--red)" : "inherit"}">${s.errors}</b><span class="hint">${(s.errorRate * 100).toFixed(1)}%</span></div>
+        <div class="card kpi"><small>Accounts · at a time</small><b>${run.people.length} · ${run.cfg.conc}</b></div>
+      </div>
+      <div class="grid2"><div><svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Requests a second and p95 latency over time"><line class="grid" x1="0" y1="${H - 4}" x2="${W}" y2="${H - 4}"/><path class="rps" d="${line("n", maxN)}"/><path class="p95" d="${line("p95", maxMs)}"/>${series.map((v, i) => (v.err ? `<circle class="err" cx="${x(i).toFixed(1)}" cy="${H - 6}" r="3"/>` : "")).join("")}</svg>
+        <div class="legend"><span><i style="background:var(--blue)"></i>requests/s (max ${maxN})</span><span><i style="background:#F59E0B"></i>p95 ms (max ${Math.round(maxMs)})</span><span><i style="background:var(--red);height:6px;width:6px;border-radius:50%"></i>errors</span></div></div>
+        <div><h3 style="font-size:15px;margin:0 0 6px">Errors by status / code</h3>${run.errors.size ? `<div class="list">${[...run.errors.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => `<div class="item"><span>${esc(k)}</span><b>${n}</b></div>`).join("")}</div>` : `<p class="hint">None so far.</p>`}</div></div>
+      <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Endpoint</th><th>Requests</th><th>Errors</th><th>p50</th><th>p95</th><th>Max</th></tr></thead><tbody>${eps.map((e) => `<tr><td>${esc(e.ep)}</td><td>${e.n}</td><td>${e.err ? `<span class="tag red">${e.err}</span>` : "0"}</td><td>${Math.round(e.p50)} ms</td><td>${Math.round(e.p95)} ms</td><td>${Math.round(e.max)} ms</td></tr>`).join("") || `<tr><td colspan="6" class="hint">Waiting for the first answers…</td></tr>`}</tbody></table></div>
+      ${run.notes.length ? `<p class="hint">${esc(run.notes.slice(-3).join(" · "))}</p>` : ""}
+    </div>`;
+    const stopBtn = $("#st-stop");
+    if (stopBtn) stopBtn.onclick = () => run.stop();
+    const again = $("#st-again");
+    if (again) again.onclick = () => { stressRun = null; VIEWS.stress(); };
+    $("#st-json").onclick = () => downloadFile(`colivease-stress-${stamp()}.json`, JSON.stringify({ api: API, config: run.cfg, startedAt: new Date(run.started).toISOString(), summary: stressSummary(run), endpoints: eps, errors: Object.fromEntries(run.errors), perSecond: series, samples: run.samples, accounts: run.people.map((p) => ({ id: p.accountId, kind: p.kind })) }, null, 2), "application/json");
+  }
 
   fromEmailLink().then((handled) => {
     if (handled) return;
