@@ -875,6 +875,14 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
 
   // ---- an account's whole profile, for staff: every picture (private ones arrive signed for an hour) and every field.
   // Saved profiles point at their pictures with "@avatarImg" / "@photo:<id>" (the app's cloudSync packMe).
+  // Same rule as the app and the server (src/lib/moveIn.js): "YYYY-MM" goes by once that month is over, a full date after
+  // that day, in Toronto.
+  const moveInPassed = (v) => {
+    const s = "string" === typeof v ? v.trim() : "";
+    if (!/^\d{4}-\d{2}(-\d{2})?$/.test(s)) return false;
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Toronto", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    return 7 === s.length ? today.slice(0, 7) > s : today > s;
+  };
   const picUri = (v) => (typeof v === "string" ? v : v && typeof v === "object" ? v.uri || "" : "");
   function profilePictures(p) {
     const photos = Array.isArray(p.photos) ? p.photos : [];
@@ -947,6 +955,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
         <div class="tags" style="margin-top:6px">${"agent" === a.kind ? `<span class="tag amber">Agent account</span>` : `<span class="tag">Member account</span>`}${a.test ? `<span class="tag blue">Test account</span>` : ""}${tierTag(e.tier || a.tier)}${badges.map((b) => `<span class="tag green">${esc(BADGES.find(([k]) => k === b)?.[1] || b)}</span>`).join("")}</div></div>
       ${a.test && can("testers.write") ? `<div class="notice blue row" style="justify-content:space-between"><span>Test account: only other test accounts and staff can see it.</span><button class="btn small primary" id="act-as">Open as this account</button></div>` : ""}
       ${a.suspended ? `<div class="notice">Suspended: ${esc(a.suspendReason || "no reason given")}</div>` : ""}
+      ${moveInPassed(p.moveIn) && "landlord" !== a.mode && "agent" !== a.kind ? `<div class="notice">Paused: their move-in date (${esc(p.moveIn)}) has passed, so they're left out of Discover and Find tenants until they pick a new one.</div>` : ""}
       ${a.restrictions?.length ? `<div class="notice">Restricted: ${esc(a.restrictions.map((r) => RESTRICT.find(([k]) => k === r)?.[1] || r).join(" · "))}</div>` : ""}
       ${can("support.chat") ? `<div class="row"><button class="btn small" id="support-msg">${a.supportThread ? `Open Support chat${a.supportThread.unread ? ` (${a.supportThread.unread} new)` : ""}` : "Message as ColivEase Support"}</button></div>` : ""}
       <section><h4>PHOTOS (${pics.length})</h4>${pics.length ? `<div class="photos">${pics.map((x) => `<a href="${esc(x.uri)}" target="_blank" rel="noopener"><img src="${esc(x.uri)}" alt="${esc(x.label)}" loading="lazy"><span class="cap"><span>${esc(x.label)}</span>${x.tag ? `<span>${esc(x.tag)}</span>` : ""}</span></a>`).join("")}</div><p class="hint">Private photos open through links that work for one hour. Opening the account again makes new ones.</p>` : `<p class="hint">No photos saved.</p>`}</section>
