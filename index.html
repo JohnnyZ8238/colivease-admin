@@ -1595,7 +1595,6 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     $("#main").innerHTML = `${page("Test accounts", "Only other test accounts and staff ever see them. They're unlimited: no live-home, team, invite or daily limits, credits never run out, and buying anything is free. Opening one never signs you out of your own ColivEase account: each tab or frame is that account only.", `<button class="btn" id="t-csv">Export CSV</button>`)}
       ${write ? `<form class="card panel" id="mk" style="display:grid;gap:14px;margin-bottom:14px"><h3 style="margin:0">Create test accounts</h3>
         <div class="form-grid">
-          <label class="field">How many (1–50)<input class="input sm num" name="count" type="number" min="1" max="50" value="5" required></label>
           <label class="field">Kind<select class="input sm" name="kind" id="mk-kind"><option value="member">Member (renter)</option><option value="landlord">Landlord (approved)</option><option value="agent">Agent (licensed)</option></select></label>
           <label class="field" id="mk-plan" hidden>Agent plan<select class="input sm" name="agentPlan"><option value="agent10">10 live homes</option><option value="agent5">5 live homes</option></select></label>
           <label class="field" id="mk-tier">Membership<select class="input sm" name="membership"><option value="">None</option><option value="gold">Gold</option><option value="diamond">Diamond</option></select></label>
@@ -1603,10 +1602,13 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
           <label class="field">Sample homes each<select class="input sm" name="listings"><option value="0">None</option><option value="1">1 home</option><option value="2">2 homes</option><option value="3">3 homes</option></select></label>
           <label class="field">Name prefix (optional)<input class="input sm" name="namePrefix" maxlength="30" placeholder="Realistic names" style="width:100%"></label>
         </div>
-        <div class="row"><label class="toggle"><input type="checkbox" name="verified">Verified badge</label><label class="toggle"><input type="checkbox" name="avatar" checked>Cartoon avatar</label><label class="toggle"><input type="checkbox" name="approveHomes" checked>Sample homes go live at once</label></div>
+        <div class="row"><label class="toggle"><input type="checkbox" name="verified">Verified badge</label><label class="toggle"><input type="checkbox" name="approveHomes" checked>Sample homes go live at once</label></div>
+        <div style="display:grid;gap:8px"><span class="hint">Real photos: one per test account, up to 6 at a time. Like a real sign-up, Seedream paints each one into the account's avatar (about 20 seconds each) and the photo is kept as its private real photo. Use photos you have the right to use.</span>
+          <div class="row"><input type="file" id="mk-photos" accept="image/jpeg,image/png,image/webp" multiple></div>
+          <div class="list" id="mk-list"></div></div>
         <div><span class="hint">Communities (languages; none picked: English plus one more)</span><div class="pick" id="mk-langs">${Object.entries(LANG).map(([k, l]) => `<label><input type="checkbox" value="${k}">${esc(l)}</label>`).join("")}</div></div>
         <div><span class="hint">Areas (none picked: two different ones each)</span><div class="pick" id="mk-areas">${Object.entries(AREAS).map(([k, l]) => `<label><input type="checkbox" value="${k}">${esc(l)}</label>`).join("")}</div></div>
-        <div class="row"><button class="btn primary">Create</button><span class="hint" id="mk-state">Realistic names, ages, budgets, move-in dates and bios; homes use the website's sample photos.</span></div>
+        <div class="row"><button class="btn primary">Create</button><span class="hint" id="mk-state">Realistic ages, budgets, move-in dates and bios; homes use the website's sample photos.</span></div>
       </form>` : ""}
       <div class="chips">${[["all", "All"], ["member", "Members"], ["landlord", "Landlords"], ["agent", "Agents"], ["restricted", "Restricted"]].map(([k, l]) => `<button class="chip ${k === testerFilter ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
       <div id="bulk"></div>
@@ -1614,23 +1616,62 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { testerFilter = b.dataset.f; VIEWS.testers(); }));
     const kindSel = $("#mk-kind");
     if (kindSel) kindSel.onchange = () => { $("#mk-plan").hidden = "agent" !== kindSel.value; $("#mk-tier").hidden = "agent" === kindSel.value; };
+    // The real photos to create accounts from, shrunk in the browser to at most 1280 px (JPEG) before upload.
+    let mkPhotos = [];
+    const shrink = (file) => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, 1280 / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(img.src);
+        const url = c.toDataURL("image/jpeg", 0.88);
+        resolve({ mimeType: "image/jpeg", data: url.split(",")[1], url, name: file.name });
+      };
+      img.onerror = () => reject(new Error(`${file.name} isn't a photo this browser can read`));
+      img.src = URL.createObjectURL(file);
+    });
+    const drawPhotos = () => {
+      const box = $("#mk-list");
+      if (!box) return;
+      box.innerHTML = mkPhotos.map((p, i) => `<div class="item"><div class="row" style="flex-wrap:nowrap"><img src="${p.url}" alt="" style="width:48px;height:60px;object-fit:cover;border-radius:10px"><span class="sub">${esc(p.name)}</span></div>
+        <div class="row"><select class="input sm" id="mk-g-${i}" title="Gender"><option value="F">Woman</option><option value="M">Man</option></select><input class="input sm" id="mk-n-${i}" maxlength="40" placeholder="Name (optional)" style="width:150px"><button type="button" class="btn small" data-rm="${i}">Remove</button></div></div>`).join("");
+      box.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = () => { mkPhotos.splice(Number(b.dataset.rm), 1); drawPhotos(); }));
+    };
+    if ($("#mk-photos")) $("#mk-photos").onchange = async (e) => {
+      const files = [...e.target.files];
+      e.target.value = "";
+      for (const file of files) {
+        if (mkPhotos.length >= 6) { toast("Up to 6 photos at a time"); break; }
+        try { mkPhotos.push(await shrink(file)); } catch (er) { toast(er.message); }
+      }
+      drawPhotos();
+    };
     if ($("#mk")) $("#mk").onsubmit = async (e) => {
       e.preventDefault();
       const f = Object.fromEntries(new FormData(e.target));
-      const n = Math.max(1, Math.min(50, Number(f.count) || 1));
+      if (!mkPhotos.length) return toast("Add a real photo for each test account");
+      const n = mkPhotos.length;
       const picked = (sel) => [...document.querySelectorAll(`${sel} input`)].filter((c) => c.checked).map((c) => c.value);
       const btn = e.target.querySelector("button.primary");
       btn.disabled = true;
-      $("#mk-state").textContent = `Creating ${plural(n, "test account")}… (with homes and avatars this can take a minute)`;
+      $("#mk-state").textContent = `Painting ${plural(n, "avatar")} and creating the accounts… (about ${Math.ceil(n / 3) * 25} seconds)`;
       try {
         const r = await api("POST", "/api/admin/testers", {
-          count: n, kind: f.kind, agentPlan: f.agentPlan, membership: f.membership || null, membershipDays: Number(f.membershipDays) || 0,
-          listings: Number(f.listings) || 0, namePrefix: (f.namePrefix || "").trim(), verified: "on" === f.verified, avatar: "on" === f.avatar, approveHomes: "on" === f.approveHomes,
+          photos: mkPhotos.map((p, i) => ({ mimeType: p.mimeType, data: p.data, gender: $(`#mk-g-${i}`)?.value || "", name: ($(`#mk-n-${i}`)?.value || "").trim() })),
+          kind: f.kind, agentPlan: f.agentPlan, membership: f.membership || null, membershipDays: Number(f.membershipDays) || 0,
+          listings: Number(f.listings) || 0, namePrefix: (f.namePrefix || "").trim(), verified: "on" === f.verified, approveHomes: "on" === f.approveHomes,
           languages: picked("#mk-langs"), areas: picked("#mk-areas"),
         });
         const made = r.created || [];
-        toast(`Created ${plural(made.length || n, "test account")}`);
-        $("#mk-state").textContent = `Created ${plural(made.length, "account")}${made.some((m) => m.homes) ? `, ${plural(made.reduce((x, m) => x + (m.liveHomes || 0), 0), "live home")}` : ""}.${(r.warnings || []).length ? ` ${r.warnings.join(" ")}` : ""}`;
+        const failed = r.failed || [];
+        toast(failed.length ? `Created ${plural(made.length, "test account")}, ${failed.length} photo(s) failed` : `Created ${plural(made.length, "test account")}`);
+        $("#mk-state").textContent = `Created ${plural(made.length, "account")}${made.some((m) => m.homes) ? `, ${plural(made.reduce((x, m) => x + (m.liveHomes || 0), 0), "live home")}` : ""}.${failed.map((x) => ` Photo ${x.photo}: ${x.error}`).join("")}${(r.warnings || []).length ? ` ${r.warnings.join(" ")}` : ""}`;
+        // Keep only the photos that failed, so they can be swapped or tried again.
+        mkPhotos = mkPhotos.filter((_, i) => failed.some((x) => x.photo === i + 1));
+        drawPhotos();
         load();
       } catch (er) { toast(er.message); $("#mk-state").textContent = er.message; } finally { btn.disabled = false; }
     };
