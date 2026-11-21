@@ -1350,9 +1350,9 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
           <div class="kv">${PRICE_LABEL.map(([k, l, per]) => `<span>${l}</span><span><b>$${esc(Number(prices[k] ?? SPEC_PRICES[k]).toFixed(2))}</b> <span class="hint">${esc(prices.currency || "CAD")} ${per}</span></span>`).join("")}</div>
           <span class="hint">${esc(prices.taxNote || "+13% HST")}. Read-only: prices are set on the server${fromServer ? "" : " (the server didn't send them, so these are the planned prices)"}.</span>
         </div>
-        <form class="card panel" id="avatars" style="display:grid;gap:12px"><h3>Comic avatars (Gemini)</h3>
-          <span class="row" style="gap:8px"><span class="dot ${s.avatarStatus?.ready ? "on" : "off"}"></span>${s.avatarStatus?.ready ? `Connected · ${esc(s.avatarStatus.model)}` : "Not connected: add the GEMINI_API_KEY secret to the api function"}</span>
-          <span class="hint">Today: ${esc(s.avatarStatus?.site ?? 0)} made by ${plural(s.avatarStatus?.people ?? 0, "person", "people")}. Every avatar is a paid Gemini call; these limits cap the cost.</span>
+        <form class="card panel" id="avatars" style="display:grid;gap:12px"><h3>Avatars (Seedream)</h3>
+          <span class="row" style="gap:8px"><span class="dot ${s.avatarStatus?.ready ? "on" : "off"}"></span>${s.avatarStatus?.ready ? `Connected · ${esc(s.avatarStatus.model)}` : "Not connected: add the ARK_API_KEY secret (Volcengine Ark, Seedream) to the api function"}</span>
+          <span class="hint">Today: ${esc(s.avatarStatus?.site ?? 0)} made by ${plural(s.avatarStatus?.people ?? 0, "person", "people")}. Every avatar is a paid Seedream call; these limits cap the cost.</span>
           <label class="toggle"><input type="checkbox" name="avatarEnabled" ${s.avatarEnabled !== false ? "checked" : ""} ${edit ? "" : "disabled"}>Turn photos into comic avatars</label>
           <div class="pair">
             <label class="field">Per signed-in person, per day<input class="input" type="number" min="0" max="50" name="avatarPerDay" value="${esc(s.avatarPerDay ?? 3)}" ${edit ? "" : "disabled"}></label>
