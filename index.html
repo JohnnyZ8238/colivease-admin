@@ -1596,110 +1596,88 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     const write = can("testers.write");
     const signin = can("testers.signin");
     $("#main").innerHTML = `${page("Test accounts", "Only other test accounts and staff ever see them. They're unlimited: no live-home, team, invite or daily limits, credits never run out, and buying anything is free. Opening one never signs you out of your own ColivEase account: each tab or frame is that account only.", `<button class="btn" id="t-csv">Export CSV</button>`)}
-      ${write ? `<form class="card panel" id="mk" style="display:grid;gap:14px;margin-bottom:14px"><h3 style="margin:0">Create test accounts</h3>
-        <div class="form-grid">
-          <label class="field">Kind<select class="input sm" name="kind" id="mk-kind"><option value="member">Member (renter)</option><option value="landlord">Landlord (approved)</option><option value="agent">Agent (licensed)</option></select></label>
-          <label class="field" id="mk-plan" hidden>Agent plan<select class="input sm" name="agentPlan"><option value="agent10">10 live homes</option><option value="agent5">5 live homes</option></select></label>
-          <label class="field" id="mk-tier">Membership<select class="input sm" name="membership"><option value="">None</option><option value="gold">Gold</option><option value="diamond">Diamond</option></select></label>
-          <label class="field">Membership days (0 = no end)<input class="input sm num" name="membershipDays" type="number" min="0" max="3650" value="0"></label>
-          <label class="field">Sample homes each<select class="input sm" name="listings"><option value="0">None</option><option value="1">1 home</option><option value="2">2 homes</option><option value="3">3 homes</option></select></label>
-          <label class="field">Name prefix (optional)<input class="input sm" name="namePrefix" maxlength="30" placeholder="Realistic names" style="width:100%"></label>
-        </div>
-        <div class="row"><label class="toggle"><input type="checkbox" name="verified">Verified badge</label><label class="toggle"><input type="checkbox" name="approveHomes" checked>Sample homes go live at once</label></div>
-        <div style="display:grid;gap:8px"><span class="hint">Real photos: one per test account, up to 6 at a time. Like a real sign-up, Seedream paints each one into the account's avatar (about 20 seconds each) and the photo is kept as its private real photo. Use photos you have the right to use.</span>
-          <div class="row"><input type="file" id="mk-photos" accept="image/jpeg,image/png,image/webp" multiple></div>
-          <div class="list" id="mk-list"></div></div>
-        <div><span class="hint">Communities (languages; none picked: English plus one more)</span><div class="pick" id="mk-langs">${Object.entries(LANG).map(([k, l]) => `<label><input type="checkbox" value="${k}">${esc(l)}</label>`).join("")}</div></div>
-        <div><span class="hint">Areas (none picked: two different ones each)</span><div class="pick" id="mk-areas">${Object.entries(AREAS).map(([k, l]) => `<label><input type="checkbox" value="${k}">${esc(l)}</label>`).join("")}</div></div>
-        <div class="row"><button class="btn primary">Create</button><span class="hint" id="mk-state">Realistic ages, budgets, move-in dates and bios; homes use the website's sample photos.</span></div>
-      </form>` : ""}
-      ${write ? `<form class="card panel" id="sh" style="display:grid;gap:14px;margin-bottom:14px"><h3 style="margin:0">Publish sample homes</h3>
-        <span class="hint">Homes for one test account, from real photos (3 to 10 each), live at once and labelled “Sample”. Pick a folder whose subfolders are the homes: the subfolder's name is the title, its photos are the photos and a .txt file in it is the description (phone numbers, emails, links and chat IDs are taken out). Only use homes and photos you own or have the owner's permission to post.</span>
-        <div class="form-grid">
-          <label class="field">Test account (host)<select class="input sm" id="sh-host"><option value="">Loading…</option></select></label>
-          <label class="field">Type<select class="input sm" id="sh-kind"><option value="whole">Whole place</option><option value="room">Room</option></select></label>
-          <label class="field">Area<select class="input sm" id="sh-area">${Object.entries(AREAS).map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join("")}</select></label>
-          <label class="field">Monthly rent (CAD)<input class="input sm num" id="sh-price" type="number" min="100" max="20000" value="1500"></label>
-        </div>
-        <div class="row"><input type="file" id="sh-folder" webkitdirectory multiple><span class="hint">or</span><input type="file" id="sh-files" accept="image/jpeg,image/png,image/webp,.txt" multiple title="One home: its photos and a .txt description"></div>
-        <div class="list" id="sh-list"></div>
-        <div class="row"><button class="btn primary">Publish</button><span class="hint" id="sh-state">Up to 4 homes per batch; the rest wait for the next one.</span></div>
-      </form>` : ""}
+      ${write ? `<section class="card panel" style="display:grid;gap:14px;margin-bottom:14px"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Create test accounts</h3><div class="row"><button type="button" class="btn small" id="ta-add">Add an account</button><button type="button" class="btn primary" id="ta-go">Create</button></div></div>
+        <span class="hint">Like a real sign-up: a real photo (Seedream paints the avatar, the photo stays private) and the same profile fields as the app. Fill each one in, or press “Fill in for me” to get a realistic profile you can still change. Each takes about 20 seconds.</span>
+        <div id="ta-cards" style="display:grid;gap:12px"></div><span class="hint" id="ta-state"></span></section>
+      <section class="card panel" style="display:grid;gap:14px;margin-bottom:14px"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Post homes for test accounts</h3><div class="row"><button type="button" class="btn small" id="th-add">Add a home</button><label class="btn small" style="cursor:pointer">From a folder<input type="file" id="th-folder" webkitdirectory multiple hidden></label><button type="button" class="btn primary" id="th-go">Post</button></div></div>
+        <span class="hint">Like the app's “Post a home”: real photos (3 to 10) and the same fields. Fill each one in, or press “Fill in for me”. A folder adds one home per subfolder (its name is the title, its photos, a .txt description); lines with links, emails, phone numbers or chat IDs are dropped. Only post homes and photos you may use.</span>
+        <div id="th-cards" style="display:grid;gap:12px"></div><span class="hint" id="th-state"></span></section>` : ""}
       <div class="chips">${[["all", "All"], ["member", "Members"], ["landlord", "Landlords"], ["agent", "Agents"], ["restricted", "Restricted"]].map(([k, l]) => `<button class="chip ${k === testerFilter ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
       <div id="bulk"></div>
       <div class="card tablewrap" id="tbl"><div class="empty">Loading…</div></div>`;
     $("#main").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { testerFilter = b.dataset.f; VIEWS.testers(); }));
-    const kindSel = $("#mk-kind");
-    if (kindSel) kindSel.onchange = () => { $("#mk-plan").hidden = "agent" !== kindSel.value; $("#mk-tier").hidden = "agent" === kindSel.value; };
-    // ---- sample homes: folders -> homes (title = folder name, photos, a .txt description without contact details)
-    let shHomes = [];
-    // Contact details never go up: a line with a link, an email, a phone number or a chat ID is dropped whole.
-    const CONTACT = [/https?:\/\/|www\./i, /[\w.+-]+@[\w-]+\.[\w.-]+/, /(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/, /\b(wechat|weixin|vx|wx|whatsapp|telegram|line|kakao|signal)\b|微信|电话|手机|联系/i];
-    const scrub = (v) => String(v || "").split(/\r?\n/).filter((line) => !CONTACT.some((re) => re.test(line))).join("\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, 2000);
-    const toHomes = async (files) => {
-      const groups = new Map();
-      for (const f of files) {
-        const parts = (f.webkitRelativePath || f.name).split("/");
-        const key = parts.length > 2 ? parts[parts.length - 2] : parts.length === 2 ? parts[0] : "Home";
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key).push(f);
-      }
-      const out = [];
-      for (const [title, list] of groups) {
-        const pics = list.filter((f) => /^image\/(jpeg|png|webp)$/.test(f.type)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 10);
-        const txtFile = list.find((f) => /\.txt$/i.test(f.name));
-        const description = txtFile ? scrub(await txtFile.text()) : "";
-        const photos = [];
-        for (const f of pics) { try { photos.push(await shrink(f)); } catch {} }
-        out.push({ title: scrub(title).slice(0, 120) || "Sample home", description, photos });
-      }
-      return out;
+    // ---- test accounts and their homes, one card each, filled in by hand or with "Fill in for me"
+    const PREF_L = { no_smoking: "No smoking", no_pets: "No pets", pets_ok: "Pets OK", quiet: "Quiet hours", night_owl: "Night owl", early_bird: "Early bird", cooks: "Cooks often", rarely_cooks: "Rarely cooks", no_parties: "No parties", tidy: "Tidy", female_only: "Women only", male_only: "Men only", students: "Students", professional: "Working professional" };
+    const INTEREST_L = { bowling: "Bowling", party: "Party", hockey: "Hockey", board_games: "Board games", cats: "Cats", gaming: "Gaming", baking: "Baking", hiking: "Hiking", gym: "Gym", movies: "Movies", photography: "Photography", coffee: "Coffee" };
+    const AMENITY_L = { wifi: "Wi-Fi", ac: "A/C", laundry: "Laundry", dishwasher: "Dishwasher", kitchen: "Kitchen", elevator: "Elevator", balcony: "Balcony", pets: "Pets allowed", subway: "Near subway", furnished: "Furnished", gym: "Gym", parking: "Parking", concierge: "Concierge", separate_entrance: "Separate entrance" };
+    const TAG_L = { team_friendly: "Good for groups", landlord_direct: "Direct from landlord", near_subway: "Near subway", room_share: "Room for rent", women_preferred: "Women preferred", furnished: "Furnished", students: "Student friendly", pets_ok: "Pets OK", legal_basement: "Legal basement unit", utilities_included: "Utilities included", condo: "Condo" };
+    const BUDGETS = [[600, 900], [800, 1100], [1100, 1500], [1500, 2000], [2000, 3000]];
+    const SELECTS = {
+      gender: [["F", "Woman"], ["M", "Man"], ["X", "Non-binary / other"]],
+      kind: [["member", "Renter"], ["landlord", "Landlord (approved)"], ["agent", "Agent (licensed)"]],
+      identity: [["student", "Student"], ["worker", "Working"], ["other", "Other"]],
+      roommateGender: [["any", "Anyone"], ["F", "Women only"], ["M", "Men only"]],
+      chatMode: [["request", "Requests first"], ["open", "Anyone can message"], ["paused", "Paused"]],
+      membership: [["", "No membership"], ["gold", "Gold"], ["diamond", "Diamond"]],
+      budget: BUDGETS.map((b) => [b.join("-"), `$${b[0]}–${b[1]} a month`]),
+      homeKind: [["whole", "Whole place"], ["room", "Room"]],
+      deposit: [["first_last", "First & last month"], ["last_only", "Last month only"]],
+      utilities: [["included", "Included"], ["extra", "Extra"], ["split", "Split"]],
+      lease: [["12mo", "12-month lease"], ["monthly", "Month-to-month"]],
+      laundry: [["in_suite", "In-suite"], ["in_building", "In the building"], ["none", "None"]],
+      hostLivesIn: [["no", "Host doesn't live there"], ["shared", "Host lives there (shared)"], ["separate", "Host lives there (separate unit)"]],
+      listDays: [["14", "Online 2 weeks"], ["30", "Online 1 month"], ["60", "Online 2 months"], ["90", "Online 3 months"]],
     };
-    const drawHomes = () => {
-      const box = $("#sh-list");
-      if (!box) return;
-      box.innerHTML = shHomes.map((h, i) => `<div class="item"><div style="display:grid;gap:6px;flex:1">
-          <div class="row"><input class="input sm" id="sh-t-${i}" value="${esc(h.title)}" maxlength="120" style="flex:1;min-width:200px"><span class="tag ${h.photos.length >= 3 ? "" : "red"}">${h.photos.length} photos${h.photos.length >= 3 ? "" : " (needs 3)"}</span><button type="button" class="btn small" data-rmh="${i}">Remove</button></div>
-          <div class="row">${h.photos.slice(0, 6).map((p) => `<img src="${p.url}" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:8px">`).join("")}</div>
-          <textarea class="input" id="sh-d-${i}" rows="2" maxlength="2000" placeholder="Description">${esc(h.description)}</textarea></div></div>`).join("");
-      box.querySelectorAll("[data-rmh]").forEach((b) => (b.onclick = () => { shHomes.splice(Number(b.dataset.rmh), 1); drawHomes(); }));
-    };
-    const addHomeFiles = async (files) => {
-      $("#sh-state").textContent = "Reading the photos…";
-      shHomes.push(...(await toHomes([...files])));
-      drawHomes();
-      $("#sh-state").textContent = `${plural(shHomes.length, "home")} ready. Up to 4 are published per click.`;
-    };
-    if ($("#sh-folder")) {
-      $("#sh-folder").onchange = async (e) => { const f = [...e.target.files]; e.target.value = ""; await addHomeFiles(f); };
-      $("#sh-files").onchange = async (e) => { const f = [...e.target.files]; e.target.value = ""; await addHomeFiles(f); };
-      api("GET", "/api/admin/testers").then((r) => {
-        const hosts = (r.testers || r.accounts || []);
-        $("#sh-host").innerHTML = hosts.length ? hosts.map((h) => `<option value="${esc(h.id)}">${esc(txt(h.name) || h.email)} · ${esc(h.kind === "agent" ? "agent" : h.mode === "landlord" ? "landlord" : "member")}</option>`).join("") : `<option value="">Create a test account first</option>`;
-      }).catch(() => { $("#sh-host").innerHTML = `<option value="">Couldn't load test accounts</option>`; });
-      $("#sh").onsubmit = async (e) => {
-        e.preventDefault();
-        const host = $("#sh-host").value;
-        if (!host) return toast("Pick a test account");
-        shHomes.forEach((h, i) => { h.title = ($(`#sh-t-${i}`)?.value || h.title).trim(); h.description = scrub($(`#sh-d-${i}`)?.value ?? h.description); });
-        const batch = shHomes.filter((h) => h.photos.length >= 3).slice(0, 4);
-        if (!batch.length) return toast("Each home needs at least 3 photos");
-        const btn = e.target.querySelector("button.primary");
-        btn.disabled = true;
-        $("#sh-state").textContent = `Publishing ${plural(batch.length, "home")}…`;
-        try {
-          const r = await api("POST", `/api/admin/testers/${enc(host)}/homes`, {
-            homes: batch.map((h) => ({ title: h.title, description: h.description, kind: $("#sh-kind").value, district: $("#sh-area").value, price: Number($("#sh-price").value) || 0, photos: h.photos.map((p) => ({ mimeType: p.mimeType, data: p.data })) })),
-          });
-          shHomes = shHomes.filter((h) => !batch.includes(h));
-          drawHomes();
-          toast(`Published ${plural((r.created || []).length, "home")}`);
-          $("#sh-state").textContent = `Published ${plural((r.created || []).length, "home")}.${shHomes.length ? ` ${plural(shHomes.length, "home")} left: click Publish again.` : ""}`;
-        } catch (er) { toast(er.message); $("#sh-state").textContent = er.message; } finally { btn.disabled = false; }
-      };
+    const months = () => Array.from({ length: 12 }, (_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + i); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; });
+    const rnd = (list) => list[Math.floor(Math.random() * list.length)];
+    const some = (list, min, max) => [...list].sort(() => Math.random() - 0.5).slice(0, min + Math.floor(Math.random() * (max - min + 1)));
+    const FIRST = { F: ["Mei", "Sofia", "Ava", "Priya", "Hana", "Chloe", "Amara", "Yuna", "Isabel", "Nora", "Zara", "Ji-woo", "Leila", "Grace", "Emily", "Fatima"], M: ["Arjun", "Kofi", "Sam", "Leo", "Daniel", "Hiro", "Omar", "Lucas", "Ethan", "Mateo", "Ravi", "Noah", "Wei", "Diego", "Kevin", "Amir"] };
+    const LAST = ["Chen", "Wang", "Patel", "Nguyen", "Kim", "Garcia", "Mensah", "Singh", "Rossi", "Silva", "Li", "Tremblay", "Martin", "Ahmed", "Zhou", "Park", "Lee", "Brown"];
+    const JOBS = ["Software developer", "Nurse", "Data analyst", "UX designer", "Accountant", "Teacher", "Pastry chef", "Marketing coordinator", "Pharmacist", "Civil engineer", "Sales associate", "Physiotherapist"];
+    const SCHOOLS = ["University of Toronto", "TMU", "York University", "OCAD University", "Seneca Polytechnic", "Humber College", "George Brown College", "Centennial College"];
+    const SPOTS = { downtown: ["Spadina Ave & College St", "5 min walk to Queen's Park station"], midtown: ["Yonge St & Eglinton Ave", "3 min walk to Eglinton station"], north_york: ["Yonge St & Sheppard Ave", "4 min walk to Sheppard-Yonge station"], scarborough: ["Ellesmere Rd & McCowan Rd", "Bus 95 to Scarborough Centre"], etobicoke: ["Islington Ave & Bloor St W", "5 min walk to Islington station"], east_end: ["Danforth Ave & Pape Ave", "2 min walk to Pape station"], mississauga: ["Hurontario St & Burnhamthorpe Rd", "MiWay to Square One"], markham: ["Hwy 7 & Warden Ave", "VIVA to Unionville GO"] };
+    // A realistic profile; the gender already picked (and the photo) stay as they are.
+    function fakeAccount(a) {
+      const gender = a.gender || rnd(["F", "M"]);
+      const kind = a.kind || "member";
+      const age = 19 + Math.floor(Math.random() * 18);
+      const identity = age < 24 ? "student" : rnd(["worker", "worker", "student"]);
+      const areas = some(Object.keys(AREAS), 1, 2);
+      const prefs = some(Object.keys(PREF_L).filter((k) => !["female_only", "male_only", identity === "student" ? "professional" : "students"].includes(k)), 2, 4).filter((k, _, l) => !(k === "early_bird" && l.includes("night_owl")) && !(k === "rarely_cooks" && l.includes("cooks")) && !(k === "no_pets" && l.includes("pets_ok")));
+      const interests = some(Object.keys(INTEREST_L), 2, 4);
+      const school = rnd(SCHOOLS), job = rnd(JOBS);
+      const budget = rnd(identity === "student" ? BUDGETS.slice(0, 3) : BUDGETS.slice(1, 4));
+      const moveIn = rnd(months().slice(1, 4));
+      const languages = Array.from(new Set(["en", ...some(["zh", "ko", "es", "fr", "hi", "vi", "tl", "fa", "pt"], 0, 1)]));
+      const pretty = (k) => (INTEREST_L[k] || k).toLowerCase();
+      const bio = "landlord" === kind
+        ? `I rent out rooms in my place near ${AREAS[areas[0]]}. Clean, quiet home; I reply fast and keep things fair.`
+        : "agent" === kind
+          ? `Licensed agent helping students and newcomers find homes across the GTA. Virtual viewings available.`
+          : identity === "student"
+            ? `${school} student, ${age}. ${prefs.includes("tidy") ? "Tidy" : "Easygoing"} and friendly, into ${pretty(interests[0])} and ${pretty(interests[1])}. Looking for a room from ${moveIn}.`
+            : `${job} working around ${AREAS[areas[0]]}. Respectful, ${prefs.includes("quiet") ? "quiet on weeknights" : "social but considerate"}, love ${pretty(interests[0])}. Moving ${moveIn}.`;
+      return { ...a, gender, kind, name: `${rnd(FIRST[gender === "X" ? rnd(["F", "M"]) : gender])} ${rnd(LAST)}`, age, identity, school: identity === "student" ? school : "", job: identity === "student" ? "" : job, bio, languages, areas, budget: budget.join("-"), moveIn, prefs, interests, roommateGender: rnd(["any", "any", "any", gender === "X" ? "any" : gender]), chatMode: rnd(["request", "open"]), membership: rnd(["", "", "", "gold"]), verified: Math.random() < 0.6 };
     }
-    // The real photos to create accounts from, shrunk in the browser to at most 1280 px (JPEG) before upload.
-    let mkPhotos = [];
+    // A realistic home; the host and the photos stay as they are.
+    function fakeHome(h) {
+      const district = rnd(Object.keys(AREAS));
+      const kind = rnd(["whole", "whole", "room"]);
+      const beds = kind === "room" ? 1 : 1 + Math.floor(Math.random() * 3);
+      const price = kind === "room" ? 850 + Math.floor(Math.random() * 8) * 75 : 1900 + beds * 450 + Math.floor(Math.random() * 6) * 100;
+      const avail = new Date(Date.now() + (7 + Math.floor(Math.random() * 50)) * 86400000).toISOString().slice(0, 10);
+      const title = kind === "room" ? `Bright room near ${SPOTS[district][0].split(" & ")[0]}` : `${beds}-bed ${rnd(["condo", "apartment", "townhouse unit"])} in ${AREAS[district]}`;
+      const description = kind === "room"
+        ? `Furnished room in a shared ${rnd(["house", "apartment"])} in ${AREAS[district]}. Quiet, clean housemates; kitchen and laundry shared. ${SPOTS[district][1]}.`
+        : `${beds}-bedroom ${rnd(["unit", "suite"])} in ${AREAS[district]} with lots of natural light, an updated kitchen and ${rnd(["a balcony", "a large living room", "plenty of storage"])}. ${SPOTS[district][1]}.`;
+      return { ...h, kind, title: h.title || title, description: h.description || description, district, address: SPOTS[district][0], transit: SPOTS[district][1], price, priceNegotiable: false, deposit: "first_last", utilities: rnd(["included", "extra", "split"]), lease: rnd(["12mo", "12mo", "monthly"]), laundry: rnd(["in_suite", "in_building"]), parking: Math.random() < 0.4, beds, baths: kind === "room" ? 1 : Math.max(1, beds - 1), sqft: kind === "room" ? 110 + Math.floor(Math.random() * 60) : 550 + beds * 220, available: avail, listDays: "60", amenities: some(Object.keys(AMENITY_L), 3, 6), tags: some(Object.keys(TAG_L).filter((t) => kind === "room" || t !== "room_share"), 1, 3), hostLivesIn: kind === "room" ? rnd(["no", "shared"]) : "no", speaks: [] };
+    }
+    const blankAccount = () => ({ photo: null, gender: "", kind: "member", name: "", age: "", identity: "", school: "", job: "", bio: "", languages: [], areas: [], budget: "", moveIn: "", prefs: [], interests: [], roommateGender: "any", chatMode: "request", membership: "", verified: false, state: "" });
+    const blankHome = () => ({ host: "", photos: [], kind: "whole", title: "", description: "", district: "", address: "", transit: "", price: "", priceNegotiable: false, deposit: "first_last", utilities: "extra", lease: "12mo", laundry: "in_building", parking: false, beds: 1, baths: 1, sqft: "", available: "", listDays: "60", amenities: [], tags: [], hostLivesIn: "no", speaks: [], state: "" });
+    let taForms = [blankAccount()];
+    let thForms = [];
+    let thHosts = [];
+    // Photos are shrunk in the browser to at most 1280 px (JPEG) before upload.
     const shrink = (file) => new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -1709,54 +1687,199 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
         c.height = Math.round(img.height * scale);
         c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
         URL.revokeObjectURL(img.src);
-        const url = c.toDataURL("image/jpeg", 0.88);
+        const url = c.toDataURL("image/jpeg", 0.86);
         resolve({ mimeType: "image/jpeg", data: url.split(",")[1], url, name: file.name });
       };
       img.onerror = () => reject(new Error(`${file.name} isn't a photo this browser can read`));
       img.src = URL.createObjectURL(file);
     });
-    const drawPhotos = () => {
-      const box = $("#mk-list");
+    // Contact details never go up: a line with a link, an email, a phone number or a chat ID is dropped whole.
+    const CONTACT = [/https?:\/\/|www\./i, /[\w.+-]+@[\w-]+\.[\w.-]+/, /(\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/, /\b(wechat|weixin|vx|wx|whatsapp|telegram|line|kakao|signal)\b|微信|电话|手机|联系/i];
+    const scrub = (v) => String(v || "").split(/\r?\n/).filter((line) => !CONTACT.some((re) => re.test(line))).join("\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, 2000);
+    const opts = (list, v) => list.map(([k, l]) => `<option value="${esc(k)}" ${String(v) === String(k) ? "selected" : ""}>${esc(l)}</option>`).join("");
+    const sel = (f, label, list, v, req) => `<label class="field">${label}${req ? " *" : ""}<select class="input sm" data-f="${f}">${req && !v ? `<option value="">Choose…</option>` : ""}${opts(list, v)}</select></label>`;
+    const inp = (f, label, v, attrs = "") => `<label class="field">${label}<input class="input sm" data-f="${f}" value="${esc(v ?? "")}" ${attrs}></label>`;
+    const multi = (f, label, map, picked) => `<div><span class="hint">${label}</span><div class="pick">${Object.entries(map).map(([k, l]) => `<label><input type="checkbox" data-m="${f}" value="${k}" ${(picked || []).includes(k) ? "checked" : ""}>${esc(l)}</label>`).join("")}</div></div>`;
+    const stateTag = (x) => (x.state ? `<span class="tag ${x.state.startsWith("Created") || x.state.startsWith("Posted") ? "green" : x.state.endsWith("…") ? "amber" : "red"}">${esc(x.state)}</span>` : "");
+    function drawAccounts() {
+      const box = $("#ta-cards");
       if (!box) return;
-      box.innerHTML = mkPhotos.map((p, i) => `<div class="item"><div class="row" style="flex-wrap:nowrap"><img src="${p.url}" alt="" style="width:48px;height:60px;object-fit:cover;border-radius:10px"><span class="sub">${esc(p.name)}</span></div>
-        <div class="row"><select class="input sm" id="mk-g-${i}" title="Gender"><option value="F">Woman</option><option value="M">Man</option></select><input class="input sm" id="mk-n-${i}" maxlength="40" placeholder="Name (optional)" style="width:150px"><button type="button" class="btn small" data-rm="${i}">Remove</button></div></div>`).join("");
-      box.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = () => { mkPhotos.splice(Number(b.dataset.rm), 1); drawPhotos(); }));
-    };
-    if ($("#mk-photos")) $("#mk-photos").onchange = async (e) => {
-      const files = [...e.target.files];
-      e.target.value = "";
-      for (const file of files) {
-        if (mkPhotos.length >= 6) { toast("Up to 6 photos at a time"); break; }
-        try { mkPhotos.push(await shrink(file)); } catch (er) { toast(er.message); }
-      }
-      drawPhotos();
-    };
-    if ($("#mk")) $("#mk").onsubmit = async (e) => {
-      e.preventDefault();
-      const f = Object.fromEntries(new FormData(e.target));
-      if (!mkPhotos.length) return toast("Add a real photo for each test account");
-      const n = mkPhotos.length;
-      const picked = (sel) => [...document.querySelectorAll(`${sel} input`)].filter((c) => c.checked).map((c) => c.value);
-      const btn = e.target.querySelector("button.primary");
-      btn.disabled = true;
-      $("#mk-state").textContent = `Painting ${plural(n, "avatar")} and creating the accounts… (about ${Math.ceil(n / 3) * 25} seconds)`;
-      try {
-        const r = await api("POST", "/api/admin/testers", {
-          photos: mkPhotos.map((p, i) => ({ mimeType: p.mimeType, data: p.data, gender: $(`#mk-g-${i}`)?.value || "", name: ($(`#mk-n-${i}`)?.value || "").trim() })),
-          kind: f.kind, agentPlan: f.agentPlan, membership: f.membership || null, membershipDays: Number(f.membershipDays) || 0,
-          listings: Number(f.listings) || 0, namePrefix: (f.namePrefix || "").trim(), verified: "on" === f.verified, approveHomes: "on" === f.approveHomes,
-          languages: picked("#mk-langs"), areas: picked("#mk-areas"),
+      box.innerHTML = taForms.map((a, i) => `<div class="card" data-i="${i}" style="padding:16px;display:grid;gap:10px;border:1px solid var(--line)">
+        <div class="row" style="justify-content:space-between"><b>Account ${i + 1}</b><div class="row">${stateTag(a)}<button type="button" class="btn small" data-act="fill">Fill in for me</button><button type="button" class="btn small" data-act="rm">Remove</button></div></div>
+        <div class="row" style="align-items:flex-start;flex-wrap:nowrap;gap:14px">
+          <label style="cursor:pointer;display:grid;gap:4px;justify-items:center">${a.photo ? `<img src="${a.photo.url}" alt="" style="width:96px;height:120px;object-fit:cover;border-radius:14px">` : `<span style="width:96px;height:120px;border:2px dashed var(--line);border-radius:14px;display:grid;place-items:center" class="hint">Real photo *</span>`}<input type="file" accept="image/jpeg,image/png,image/webp" data-photo hidden><span class="hint">${a.photo ? "Change" : "Choose"}</span></label>
+          <div class="form-grid" style="flex:1">
+            ${sel("gender", "Gender", SELECTS.gender, a.gender, true)}
+            ${inp("name", "Name", a.name, 'maxlength="40" placeholder="Empty: a name for the gender"')}
+            ${inp("age", "Age *", a.age, 'type="number" min="18" max="80"')}
+            ${sel("kind", "Account", SELECTS.kind, a.kind)}
+            ${sel("identity", "Right now", SELECTS.identity, a.identity, true)}
+            ${a.identity === "student" ? inp("school", "School", a.school, 'maxlength="60"') : inp("job", "Job", a.job, 'maxlength="60"')}
+            ${sel("budget", "Budget", SELECTS.budget, a.budget, a.kind === "member")}
+            ${sel("moveIn", "Move-in month", months().map((m) => [m, m]), a.moveIn, a.kind === "member")}
+            ${sel("roommateGender", "Roommates", SELECTS.roommateGender, a.roommateGender)}
+            ${sel("chatMode", "Chat setting", SELECTS.chatMode, a.chatMode)}
+            ${sel("membership", "Membership", SELECTS.membership, a.membership)}
+            <label class="toggle"><input type="checkbox" data-f="verified" ${a.verified ? "checked" : ""}>Verified badge</label>
+          </div></div>
+        <label class="field">About me<textarea class="input" data-f="bio" rows="2" maxlength="500">${esc(a.bio)}</textarea></label>
+        ${multi("languages", "Communities *", LANG, a.languages)}
+        ${multi("areas", "Areas" + (a.kind === "member" ? " *" : ""), AREAS, a.areas)}
+        ${multi("prefs", "Habits", PREF_L, a.prefs)}
+        ${multi("interests", "Interests" + (a.kind === "member" ? " *" : ""), INTEREST_L, a.interests)}
+      </div>`).join("") || `<div class="empty">No accounts yet. Press “Add an account”.</div>`;
+      bindCards(box, taForms, drawAccounts, (a, act) => { if ("fill" === act) Object.assign(a, fakeAccount(a)); });
+    }
+    function drawHomes() {
+      const box = $("#th-cards");
+      if (!box) return;
+      const hosts = thHosts.map((h) => [h.id, `${txt(h.name) || h.email} · ${h.kind === "agent" ? "agent" : h.mode === "landlord" ? "landlord" : "renter (sublet)"}`]);
+      box.innerHTML = thForms.map((h, i) => `<div class="card" data-i="${i}" style="padding:16px;display:grid;gap:10px;border:1px solid var(--line)">
+        <div class="row" style="justify-content:space-between"><b>Home ${i + 1}</b><div class="row">${stateTag(h)}<button type="button" class="btn small" data-act="fill">Fill in for me</button><button type="button" class="btn small" data-act="rm">Remove</button></div></div>
+        <div class="row">${h.photos.map((p, k) => `<span style="position:relative"><img src="${p.url}" alt="" style="width:84px;height:64px;object-fit:cover;border-radius:10px"><button type="button" class="btn small" data-rmphoto="${k}" style="position:absolute;top:2px;right:2px;padding:0 6px">×</button></span>`).join("")}<label class="btn small" style="cursor:pointer">Add photos<input type="file" accept="image/jpeg,image/png,image/webp" data-photos multiple hidden></label><span class="tag ${h.photos.length >= 3 ? "" : "red"}">${h.photos.length}/3–10 photos</span></div>
+        <div class="form-grid">
+          ${sel("host", "Test account (host)", hosts, h.host, true)}
+          ${sel("kind", "Type", SELECTS.homeKind, h.kind)}
+          ${inp("title", "Title *", h.title, 'maxlength="120"')}
+          ${sel("district", "Area", Object.entries(AREAS), h.district, true)}
+          ${inp("address", "Cross streets", h.address, 'maxlength="120" placeholder="e.g. Yonge St & Sheppard Ave"')}
+          ${inp("transit", "Transit", h.transit, 'maxlength="120"')}
+          ${inp("price", "Monthly rent (CAD) *", h.price, 'type="number" min="100" max="20000"')}
+          <label class="toggle"><input type="checkbox" data-f="priceNegotiable" ${h.priceNegotiable ? "checked" : ""}>Rent negotiable</label>
+          ${sel("deposit", "Deposit", SELECTS.deposit, h.deposit)}
+          ${sel("utilities", "Utilities", SELECTS.utilities, h.utilities)}
+          ${sel("lease", "Lease", SELECTS.lease, h.lease)}
+          ${sel("laundry", "Laundry", SELECTS.laundry, h.laundry)}
+          <label class="toggle"><input type="checkbox" data-f="parking" ${h.parking ? "checked" : ""}>Parking</label>
+          ${h.kind === "whole" ? inp("beds", "Bedrooms", h.beds, 'type="number" min="1" max="10"') + inp("baths", "Bathrooms", h.baths, 'type="number" min="1" max="6" step="0.5"') : ""}
+          ${inp("sqft", "Size (sq ft)", h.sqft, 'type="number" min="50" max="10000"')}
+          ${inp("available", "Move-in date *", h.available, 'type="date"')}
+          ${sel("listDays", "Keep it online", SELECTS.listDays, h.listDays)}
+          ${sel("hostLivesIn", "Host", SELECTS.hostLivesIn, h.hostLivesIn)}
+        </div>
+        <label class="field">Description<textarea class="input" data-f="description" rows="3" maxlength="2000">${esc(h.description)}</textarea></label>
+        ${multi("amenities", "Amenities", AMENITY_L, h.amenities)}
+        ${multi("tags", "Tags (up to 6)", TAG_L, h.tags)}
+        ${multi("speaks", "Communities (none picked: the host's)", LANG, h.speaks)}
+      </div>`).join("") || `<div class="empty">No homes yet. Press “Add a home” or pick a folder.</div>`;
+      bindCards(box, thForms, drawHomes, (h, act) => { if ("fill" === act) Object.assign(h, fakeHome(h)); });
+    }
+    // One binder for both lists: fields (data-f), checkbox groups (data-m), photos, and the card buttons.
+    function bindCards(box, forms, redraw, onAct) {
+      box.querySelectorAll("[data-i]").forEach((card) => {
+        const x = forms[Number(card.dataset.i)];
+        card.querySelectorAll("[data-f]").forEach((el) => {
+          const set = (changed) => {
+            const was = x[el.dataset.f];
+            x[el.dataset.f] = "checkbox" === el.type ? el.checked : el.value;
+            // These change which fields the card asks for.
+            if (changed && ["kind", "identity"].includes(el.dataset.f) && was !== x[el.dataset.f]) redraw();
+          };
+          el.oninput = () => set("SELECT" === el.tagName);
+          el.onchange = () => set("SELECT" === el.tagName);
         });
-        const made = r.created || [];
-        const failed = r.failed || [];
-        toast(failed.length ? `Created ${plural(made.length, "test account")}, ${failed.length} photo(s) failed` : `Created ${plural(made.length, "test account")}`);
-        $("#mk-state").textContent = `Created ${plural(made.length, "account")}${made.some((m) => m.homes) ? `, ${plural(made.reduce((x, m) => x + (m.liveHomes || 0), 0), "live home")}` : ""}.${failed.map((x) => ` Photo ${x.photo}: ${x.error}`).join("")}${(r.warnings || []).length ? ` ${r.warnings.join(" ")}` : ""}`;
-        // Keep only the photos that failed, so they can be swapped or tried again.
-        mkPhotos = mkPhotos.filter((_, i) => failed.some((x) => x.photo === i + 1));
-        drawPhotos();
+        card.querySelectorAll("[data-m]").forEach((el) => (el.onchange = () => {
+          const f = el.dataset.m;
+          x[f] = el.checked ? [...new Set([...(x[f] || []), el.value])] : (x[f] || []).filter((v) => v !== el.value);
+        }));
+        card.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => {
+          if ("rm" === b.dataset.act) forms.splice(Number(card.dataset.i), 1);
+          else onAct(x, b.dataset.act);
+          redraw();
+        }));
+        const one = card.querySelector("[data-photo]");
+        if (one) one.onchange = async () => { const f = one.files[0]; if (!f) return; try { x.photo = await shrink(f); } catch (e) { toast(e.message); } redraw(); };
+        const many = card.querySelector("[data-photos]");
+        if (many) many.onchange = async () => { for (const f of [...many.files]) { if (x.photos.length >= 10) break; try { x.photos.push(await shrink(f)); } catch (e) { toast(e.message); } } redraw(); };
+        card.querySelectorAll("[data-rmphoto]").forEach((b) => (b.onclick = () => { x.photos.splice(Number(b.dataset.rmphoto), 1); redraw(); }));
+      });
+    }
+    if ($("#ta-cards")) {
+      drawAccounts();
+      $("#ta-add").onclick = () => { taForms.push(blankAccount()); drawAccounts(); };
+      $("#ta-go").onclick = async () => {
+        const todo = taForms.filter((a) => !String(a.state).startsWith("Created"));
+        if (!todo.length) return toast("Add an account first");
+        const btn = $("#ta-go");
+        btn.disabled = true;
+        let done = 0;
+        for (const a of todo) {
+          a.state = "Creating…";
+          drawAccounts();
+          try {
+            const r = await api("POST", "/api/admin/testers", { accounts: [{
+              photo: a.photo ? { mimeType: a.photo.mimeType, data: a.photo.data } : null, kind: a.kind, membership: a.membership || null, verified: a.verified,
+              profile: { name: a.name.trim(), gender: a.gender, age: Number(a.age), identity: a.identity, school: a.school, job: a.job, bio: a.bio, languages: a.languages, areas: a.areas, budget: a.budget ? a.budget.split("-").map(Number) : null, moveIn: a.moveIn, prefs: a.prefs, interests: a.interests, roommateGender: a.roommateGender, chatMode: a.chatMode },
+            }] });
+            const made = (r.created || [])[0];
+            a.state = made ? `Created: ${made.name}` : (r.failed || [])[0]?.error || "Not created";
+            if (made) done++;
+          } catch (e) { a.state = e.message; }
+          drawAccounts();
+        }
+        btn.disabled = false;
+        $("#ta-state").textContent = `${plural(done, "account")} created${done < todo.length ? `, ${todo.length - done} not: see each card` : ""}.`;
+        taForms = taForms.filter((a) => !String(a.state).startsWith("Created"));
+        if (!taForms.length) taForms = [blankAccount()];
+        setTimeout(drawAccounts, 4000);
         load();
-      } catch (er) { toast(er.message); $("#mk-state").textContent = er.message; } finally { btn.disabled = false; }
-    };
+      };
+    }
+    if ($("#th-cards")) {
+      const loadHosts = () => api("GET", "/api/admin/testers").then((r) => { thHosts = r.testers || r.accounts || []; drawHomes(); }).catch(() => {});
+      loadHosts();
+      drawHomes();
+      $("#th-add").onclick = () => { thForms.push(blankHome()); drawHomes(); };
+      $("#th-folder").onchange = async (e) => {
+        const files = [...e.target.files];
+        e.target.value = "";
+        const groups = new Map();
+        for (const f of files) {
+          const parts = (f.webkitRelativePath || f.name).split("/");
+          const key = parts.length > 2 ? parts[parts.length - 2] : parts[0];
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push(f);
+        }
+        $("#th-state").textContent = "Reading the photos…";
+        for (const [title, list] of groups) {
+          const h = blankHome();
+          h.title = scrub(title).slice(0, 120);
+          const txtFile = list.find((f) => /\.txt$/i.test(f.name));
+          if (txtFile) h.description = scrub(await txtFile.text());
+          for (const f of list.filter((f) => /^image\/(jpeg|png|webp)$/.test(f.type)).sort((a, b) => a.name.localeCompare(b.name)).slice(0, 10)) { try { h.photos.push(await shrink(f)); } catch {} }
+          thForms.push(h);
+        }
+        $("#th-state").textContent = `${plural(groups.size, "home")} added from the folder. Fill in the rest of each (or “Fill in for me”), then Post.`;
+        drawHomes();
+      };
+      $("#th-go").onclick = async () => {
+        const todo = thForms.filter((h) => !String(h.state).startsWith("Posted"));
+        if (!todo.length) return toast("Add a home first");
+        const btn = $("#th-go");
+        btn.disabled = true;
+        let done = 0;
+        for (const h of todo) {
+          if (!h.host) { h.state = "Pick a test account"; continue; }
+          h.state = "Posting…";
+          drawHomes();
+          try {
+            await api("POST", `/api/admin/testers/${enc(h.host)}/homes`, { homes: [{
+              photos: h.photos.map((p) => ({ mimeType: p.mimeType, data: p.data })), kind: h.kind, title: h.title.trim(), description: scrub(h.description), district: h.district, address: h.address, transit: h.transit,
+              price: Number(h.price), priceNegotiable: h.priceNegotiable, deposit: h.deposit, utilities: h.utilities, lease: h.lease, laundry: h.laundry, parking: h.parking, beds: Number(h.beds), baths: Number(h.baths), sqft: Number(h.sqft) || null,
+              available: h.available, listDays: Number(h.listDays), amenities: h.amenities, tags: h.tags.slice(0, 6), hostLivesIn: h.hostLivesIn, speaks: h.speaks,
+            }] });
+            h.state = "Posted";
+            done++;
+          } catch (e) { h.state = e.message; }
+          drawHomes();
+        }
+        btn.disabled = false;
+        drawHomes();
+        $("#th-state").textContent = `${plural(done, "home")} posted${done < todo.length ? `, ${todo.length - done} not: see each card` : ""}.`;
+        thForms = thForms.filter((h) => "Posted" !== h.state);
+        setTimeout(drawHomes, 4000);
+      };
+    }
     let list = [];
     const selected = () => list.filter((t) => testerSel.has(t.id));
     const bulk = async (action, extra, msg, confirmText) => {
