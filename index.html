@@ -394,6 +394,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     broadcast: '<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13"/>',
     admins: '<path d="M12 3l8 3v6c0 4.5-3.4 7.7-8 9-4.6-1.3-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
     audit: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    matching: '<path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15l3-4 3 2 5-7"/>',
     testers: '<path d="M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 006 21h12a1.7 1.7 0 001.5-2.5L14 9V3"/><path d="M7.5 15h9"/>',
     landlords: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
     agents: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.5c.5-1.6 1.7-2.5 3.2-2.5s2.7.9 3.2 2.5M14.5 10h4M14.5 13.5h3"/>',
@@ -648,6 +649,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     ["chats", "Chats", "chats.read"],
     ["reports", "Reports", "reports.read"],
     ["members", "Memberships", "users.read"],
+    ["matching", "Matching report", "users.read"],
     ["settings", "Site settings", null],
     ["notifications", "Notifications", "notify.write"],
     ["broadcast", "Broadcast", "broadcast"],
@@ -2080,6 +2082,23 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
 
   // Audit log: filters (action, staff member, target, dates, reason text) and CSV.
   const auditF = { action: "", admin: "", target: "", from: "", to: "", q: "", limit: 300 };
+  // How well the matching scores predict what really happened (server: match/calibrate.js; docs/MATCHING.md §8).
+  VIEWS.matching = async () => {
+    $("#main").innerHTML = `${page("Matching report", "Do the match scores predict real outcomes? Roommates: chats where both wrote at least twice vs. declined or unanswered. Homes: applications accepted or booked for a viewing vs. declined.")}<div id="mr"><div class="empty">Working it out…</div></div>`;
+    let r;
+    try { r = await api("GET", "/api/admin/matching"); } catch (e) { $("#mr").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+    const pct = (x) => (null == x ? "—" : `${Math.round(x * 100)}%`);
+    const NAMES = { clean: "Tidiness", noise: "Noise", schedule: "Sleep times", budget: "Budget", area: "Area", guests: "Guests", overnight: "Overnight guests", smoke: "Smoking", pets: "Pets", moveIn: "Move-in", lease: "Lease length", roomType: "Room type", privateBath: "Private bathroom", parking: "Parking", furnished: "Furnished", laundry: "Laundry" };
+    const block = (title, x) => {
+      const aucText = null == x.auc ? "not enough outcomes yet (needs 5 good and 5 bad)" : `${x.auc.toFixed(2)} <span class="hint">(0.50 = no better than chance, 0.70+ useful, 0.80+ strong)</span>`;
+      return `<section class="card panel" style="margin-bottom:16px"><h3>${esc(title)}</h3>
+        <div class="row" style="gap:24px;flex-wrap:wrap"><div><b>${x.samples}</b><span class="sub">outcomes</span></div><div><b>${pct(x.successRate)}</b><span class="sub">worked out</span></div><div><b>${aucText}</b><span class="sub">does the total score predict it?</span></div></div>
+        <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Item</th><th>Weight now</th><th>Worked out when it matched</th><th>…when it didn't</th><th>Lift</th><th>Suggested weight</th></tr></thead><tbody>
+        ${x.items.map((i) => `<tr><td>${esc(NAMES[i.key] || i.key)}</td><td>${(Math.round(i.weight * 10) / 10)}</td><td>${pct(i.successIfMatched)} <span class="sub">${i.matched} cases</span></td><td>${pct(i.successIfNot)} <span class="sub">${i.notMatched} cases</span></td><td>${i.enough ? `<b style="color:${i.lift > 0.05 ? "var(--green,#16a34a)" : i.lift < -0.05 ? "var(--red,#dc2626)" : "inherit"}">${i.lift > 0 ? "+" : ""}${Math.round(i.lift * 100)} pts</b>` : `<span class="hint">needs ${20} each side</span>`}</td><td>${x.suggested[i.key] !== Math.round(i.weight * 10) / 10 ? `<b>${x.suggested[i.key]}</b>` : x.suggested[i.key]}</td></tr>`).join("")}
+        </tbody></table></div></section>`;
+    };
+    $("#mr").innerHTML = `<div class="notice blue" style="margin-bottom:14px">Rules version ${esc(r.version)}. Suggested weights only move items with enough data, by at most half or double, keeping the same total. Nothing changes on its own: ask for the weights in config.js to be updated once the suggestions are stable over a few weeks.</div>${block("Roommates", r.roommates)}${block("Homes", r.homes)}`;
+  };
   VIEWS.audit = async () => {
     const groups = [...new Set(Object.keys(ACTION).map((k) => k.split(".")[0]))].sort();
     $("#main").innerHTML = `${page("Audit log", "Every admin change and every chat opened: who, when and why", `<button class="btn" id="a-csv">Export CSV</button>`)}
