@@ -962,7 +962,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
       ${moveInPassed(p.moveIn) && "landlord" !== a.mode && "agent" !== a.kind ? `<div class="notice">Paused: their move-in date (${esc(p.moveIn)}) has passed, so they're left out of Discover and Find tenants until they pick a new one.</div>` : ""}
       ${a.restrictions?.length ? `<div class="notice">Restricted: ${esc(a.restrictions.map((r) => RESTRICT.find(([k]) => k === r)?.[1] || r).join(" · "))}</div>` : ""}
       ${can("support.chat") ? `<div class="row"><button class="btn small" id="support-msg">${a.supportThread ? `Open Support chat${a.supportThread.unread ? ` (${a.supportThread.unread} new)` : ""}` : "Message as ColivEase Support"}</button></div>` : ""}
-      <section><h4>PHOTOS (${pics.length})</h4>${pics.length ? `<div class="photos">${pics.map((x) => `<a href="${esc(x.uri)}" target="_blank" rel="noopener"><img src="${esc(x.uri)}" alt="${esc(x.label)}" loading="lazy"><span class="cap"><span>${esc(x.label)}</span>${x.tag ? `<span>${esc(x.tag)}</span>` : ""}</span></a>`).join("")}</div><p class="hint">Private photos open through links that work for one hour. Opening the account again makes new ones.</p>` : `<p class="hint">No photos saved.</p>`}</section>
+      <section><h4>PHOTOS (${pics.length})</h4>${pics.length ? `<div class="photos">${pics.map((x) => `<a href="${esc(x.uri)}" target="_blank" rel="noopener"><img src="${esc(x.uri)}" alt="${esc(x.label)}" loading="lazy"><span class="cap"><span>${esc(x.label)}</span>${x.tag ? `<span>${esc(x.tag)}</span>` : ""}</span></a>`).join("")}</div><p class="hint">Private photos open through links that work for one hour. Opening the account again makes new ones.</p>` : `<p class="hint">No photos saved.</p>`}${can("users.write") && "real" !== p.avatarMode && pics.some((x) => "Avatar others see" !== x.label) ? `<div class="row"><button class="btn small" id="redraw">Paint the avatar again (Seedream)</button><span class="hint">From the real photo the account saved, for an avatar a past fault left unpainted. About 20 seconds.</span></div>` : ""}</section>
       <section><h4>PROFILE</h4><div class="kv">
         <span>Joined</span><span>${fmt(a.createdAt)}</span>
         <span>Last active</span><span>${fmt(a.lastActive)}</span>
@@ -1031,6 +1031,12 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     on("#act-as", () => actAs(a.id));
     on("#to-agents", () => go("agents"));
     on("#save-note", () => post({ note: $("#note", el).value }, "Note saved"));
+    on("#redraw", async () => {
+      const b = $("#redraw", el);
+      b.disabled = true;
+      b.textContent = "Painting…";
+      try { await api("POST", `/api/admin/accounts/${enc(id)}/avatar`, {}); toast("New avatar saved"); refresh(); } catch (er) { toast(er.message); b.disabled = false; b.textContent = "Paint the avatar again (Seedream)"; }
+    });
     on("#g-tier-go", () => { const d = num("#g-tier-days"); if (!(d > 0)) return toast("Enter a number of days"); grant({ tier: $("#g-tier", el).value, tierDays: d }, `${TIER[$("#g-tier", el).value][0]} given for ${plural(d, "day")}`); });
     on("#g-tier-rm", () => grant({ tier: "free", tierDays: 0 }, "Membership removed"));
     on("#g-plan-go", () => { const d = num("#g-plan-days"); if (!(d > 0)) return toast("Enter a number of days"); grant({ agentPlan: $("#g-plan", el).value, agentDays: d }, `Agent plan given for ${plural(d, "day")}`); });
