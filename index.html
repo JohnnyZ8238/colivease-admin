@@ -1343,7 +1343,6 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
           <label class="toggle"><input type="checkbox" name="listingApproval" ${s.listingApproval !== false ? "checked" : ""} ${edit ? "" : "disabled"}>New homes need approval before they go live</label>
           <label class="toggle"><input type="checkbox" name="signupsOpen" ${s.signupsOpen !== false ? "checked" : ""} ${edit ? "" : "disabled"}>New sign-ups open</label>
           <label class="toggle"><input type="checkbox" name="maintenance" ${s.maintenance ? "checked" : ""} ${edit ? "" : "disabled"}>Maintenance mode (the app shows a maintenance notice)</label>
-          <label class="toggle"><input type="checkbox" name="testsPublic" ${true === s.testsPublic ? "checked" : ""} ${edit ? "" : "disabled"}>Test accounts and their homes are public samples: everyone sees them, labelled “Sample”, and what members write to them lands in Sample chats</label>
           <span class="hint">Neighbourhood safety info is free for everyone, signed in or not.</span>
           ${edit ? `<div><button class="btn primary">Save switches</button></div>` : ""}
         </form>
@@ -1380,7 +1379,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     $("#switches").onsubmit = async (e) => {
       e.preventDefault();
       const f = new FormData(e.target);
-      try { await api("PUT", "/api/admin/settings", { listingApproval: f.get("listingApproval") === "on", signupsOpen: f.get("signupsOpen") === "on", maintenance: f.get("maintenance") === "on", testsPublic: f.get("testsPublic") === "on" }); toast("Switches saved"); } catch (er) { toast(er.message); }
+      try { await api("PUT", "/api/admin/settings", { listingApproval: f.get("listingApproval") === "on", signupsOpen: f.get("signupsOpen") === "on", maintenance: f.get("maintenance") === "on" }); toast("Switches saved"); } catch (er) { toast(er.message); }
     };
   };
 
