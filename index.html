@@ -302,6 +302,13 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
     set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
   };
+  // The staff sign-in lives only as long as the tab (sessionStorage), so a token is never left behind on a shared or
+  // lost computer; one an older panel kept in localStorage is removed.
+  const tokenStore = {
+    get: () => { try { return sessionStorage.getItem("cv-admin-token"); } catch { return null; } },
+    set: (v) => { try { v == null ? sessionStorage.removeItem("cv-admin-token") : sessionStorage.setItem("cv-admin-token", v); } catch {} },
+  };
+  store.set("cv-admin-token", null);
   const fmt = (ts) => (ts ? new Date(ts).toLocaleString("en-CA", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
   const ago = (ts) => {
     if (!ts) return "—";
@@ -404,7 +411,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
   const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3YW15Z29yZnhiZHB6YW93b21kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2OTY4NjEsImV4cCI6MjEwODI3Mjg2MX0.FW7PuZi3HY6nZhezMHE6VdWtPznYiZpWoQEZRZUWj-4";
   const savedApi = store.get("cv-admin-api");
   let API = savedApi && "https://api.colivease.ca" !== savedApi ? savedApi : DEFAULT_API;
-  let TOKEN = store.get("cv-admin-token");
+  let TOKEN = tokenStore.get();
   // The app that test accounts open in (#cv-tab-session=<token>: that tab or frame only, kept in memory by the app). A
   // local copy of the panel can point it at a local web build ("cv-admin-app").
   const APP_URL = (LOCAL && store.get("cv-admin-app")) || (LOCAL ? "http://localhost:5188/app.html" : "https://www.colivease.ca/app.html");
@@ -574,7 +581,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
       ME = null;
       throw e2;
     }
-    store.set("cv-admin-token", TOKEN);
+    tokenStore.set(TOKEN);
     codeSent = false;
     $("#sent-note").hidden = true;
     $("#code-field").hidden = true;
@@ -619,7 +626,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     if (TOKEN) api("POST", "/api/auth/logout").catch(() => {});
     TOKEN = null;
     ME = null;
-    store.set("cv-admin-token", null);
+    tokenStore.set(null);
     closeDrawer();
     showSignin();
   }
@@ -957,7 +964,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     const el = drawer(`
       <div>${pics[0] ? `<img src="${esc(pics[0].uri)}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:1px solid var(--line);float:right;margin:36px 0 0 12px">` : ""}<h3>${esc(name || "(no name)")}</h3><p class="hint">${esc(a.email || "")} · ${esc(a.id)}</p>
         <div class="tags" style="margin-top:6px">${"agent" === a.kind ? `<span class="tag amber">Agent account</span>` : `<span class="tag">Member account</span>`}${a.test ? `<span class="tag blue">Test account</span>` : ""}${tierTag(e.tier || a.tier)}${badges.map((b) => `<span class="tag green">${esc(BADGES.find(([k]) => k === b)?.[1] || b)}</span>`).join("")}</div></div>
-      ${a.test && can("testers.write") ? `<div class="notice blue row" style="justify-content:space-between"><span>Test account: only other test accounts and staff can see it.</span><button class="btn small primary" id="act-as">Open as this account</button></div>` : ""}
+      ${a.test ? `<div class="notice blue row" style="justify-content:space-between"><span>Test account: everyone sees it, labelled Sample. Chats with it arrive in Sample chats.</span>${can("testers.signin") ? `<button class="btn small primary" id="act-as">Open as this account</button>` : ""}</div>` : ""}
       ${a.suspended ? `<div class="notice">Suspended: ${esc(a.suspendReason || "no reason given")}</div>` : ""}
       ${moveInPassed(p.moveIn) && "landlord" !== a.mode && "agent" !== a.kind ? `<div class="notice">Paused: their move-in date (${esc(p.moveIn)}) has passed, so they're left out of Discover and Find tenants until they pick a new one.</div>` : ""}
       ${a.restrictions?.length ? `<div class="notice">Restricted: ${esc(a.restrictions.map((r) => RESTRICT.find(([k]) => k === r)?.[1] || r).join(" · "))}</div>` : ""}
