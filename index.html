@@ -1280,8 +1280,8 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
   // reporters the outcome.
   let reportStatus = "open";
   const RSTAT = { open: ["Open", "red"], reviewing: ["In review", "amber"], resolved: ["Resolved", "green"], dismissed: ["Dismissed", ""] };
-  const REASON = { scam: "Scam", fake: "Fake home", harassment: "Harassment", discrimination: "Discrimination", other: "Other" };
-  const RKIND = { person: "Person", listing: "Home", message: "Message", team: "Team" };
+  const REASON = { scam: "Scam", fake: "Fake home", harassment: "Harassment", discrimination: "Discrimination", other: "Other", offensive: "Offensive (AI)", inaccurate: "Inaccurate (AI)" };
+  const RKIND = { person: "Person", listing: "Home", message: "Message", team: "Team", ai: "AI output" };
   const OUTCOME = { keep: "Kept hidden", restore: "Restored", suspend: "Account suspended" };
   const RESOLVE = {
     keep: { title: "Keep it hidden?", hint: "It stays hidden until someone restores it (Handle on its report). The people who reported it are told.", confirm: "Keep hidden", status: "resolved" },
