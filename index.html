@@ -647,7 +647,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     ["agents", "Agent applications", "agents.review"],
     ["landlords", "Landlord applications", "agents.review"],
     ["support", "Messages", "support.chat"],
-    ["samples", "Sample chats", "testers.signin"],
+    ["samples", "Sample inbox", "testers.signin"],
     ["chats", "Chats", "chats.read"],
     ["reports", "Reports", "reports.read"],
     ["members", "Memberships", "users.read"],
@@ -968,7 +968,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     const el = drawer(`
       <div>${pics[0] ? `<img src="${esc(pics[0].uri)}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:1px solid var(--line);float:right;margin:36px 0 0 12px">` : ""}<h3>${esc(name || "(no name)")}</h3><p class="hint">${esc(a.email || "")} · ${esc(a.id)}</p>
         <div class="tags" style="margin-top:6px">${"agent" === a.kind ? `<span class="tag amber">Agent account</span>` : `<span class="tag">Member account</span>`}${a.test ? `<span class="tag blue">Test account</span>` : ""}${tierTag(e.tier || a.tier)}${badges.map((b) => `<span class="tag green">${esc(BADGES.find(([k]) => k === b)?.[1] || b)}</span>`).join("")}</div></div>
-      ${a.test ? `<div class="notice blue row" style="justify-content:space-between"><span>Test account: everyone sees it, labelled Sample. Chats with it arrive in Sample chats.</span>${can("testers.signin") ? `<button class="btn small primary" id="act-as">Open as this account</button>` : ""}</div>` : ""}
+      ${a.test ? `<div class="notice blue row" style="justify-content:space-between"><span>Test account: everyone sees it, labelled Sample; its homes are posted under a code. Messages and applications to it arrive in the Sample inbox.</span>${can("testers.signin") ? `<button class="btn small primary" id="act-as">Open as this account</button>` : ""}</div>` : ""}
       ${a.suspended ? `<div class="notice">Suspended: ${esc(a.suspendReason || "no reason given")}</div>` : ""}
       ${moveInPassed(p.moveIn) && "landlord" !== a.mode && "agent" !== a.kind ? `<div class="notice">Paused: their move-in date (${esc(p.moveIn)}) has passed, so they're left out of Discover and Find tenants until they pick a new one.</div>` : ""}
       ${a.restrictions?.length ? `<div class="notice">Restricted: ${esc(a.restrictions.map((r) => RESTRICT.find(([k]) => k === r)?.[1] || r).join(" · "))}</div>` : ""}
@@ -2219,25 +2219,69 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     }, 10000);
   };
 
-  // ---- Sample chats: what members write to sample (test) accounts and their homes. Staff answer as the sample account
+  // ---- Sample inbox: what members write to sample (test) accounts and their homes, and applications to those homes. Staff answer and decide as the sample account
   // (the reply shows in the member's Messages as coming from it).
   let samplesOpen = null, samplesTimer = null;
+  let samplesFilter = "all";
   VIEWS.samples = async () => {
     clearInterval(samplesTimer);
-    $("#main").innerHTML = `${page("Sample chats", "Everything members write to sample accounts and sample homes. Your reply is sent as that sample account; every reply is in the audit log.")}
-      <div class="inbox"><div class="card threads" id="x-list"><div class="empty">Loading…</div></div><div class="card conv" id="x-conv"><div class="empty">Pick a chat.</div></div></div>`;
+    $("#main").innerHTML = `${page("Sample inbox", "Everything members send to test accounts: chats with them, questions about their homes and applications to their homes. You answer and decide as that test account; members see the test account (as a home's host, under its code). Every reply and decision is in the audit log.")}
+      <div class="chips" id="x-filters"></div>
+      <div class="inbox"><div class="card threads" id="x-list"><div class="empty">Loading…</div></div><div class="card conv" id="x-conv"><div class="empty">Pick a conversation on the left.</div></div></div>`;
     const nameOf = (p, id) => esc(txt(p?.name) || p?.email || id || "Deleted user");
-    const label = (th) => `${th.others.map((m) => nameOf(th.people[m], m)).join(", ") || "Testers only"} → ${th.testers.map((m) => nameOf(th.people[m], m)).join(", ")}`;
+    const face = (p, size = 28) => p?.avatarImg ? `<img src="${esc(p.avatarImg)}" alt="" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex:none">` : `<span style="width:${size}px;height:${size}px;border-radius:50%;background:#e2e8f0;display:inline-grid;place-items:center;flex:none;color:#64748b;font-size:${Math.round(size * 0.45)}px;font-weight:700">${esc([...(txt(p?.name) || "?")][0].toUpperCase())}</span>`;
+    const APP_TAG = { pending: ["red", "Application waiting"], viewing: ["amber", "Viewing"], accepted: ["green", "Accepted"], rejected: ["", "Declined"], withdrawn: ["", "Withdrawn"] };
+    const appTag = (a) => `<span class="tag ${APP_TAG[a.status]?.[0] ?? ""}">${APP_TAG[a.status]?.[1] ?? esc(a.status)}</span>`;
+    // Which test account, and in what role: the host of a home (members see its code), or a person they chat with.
+    const roleOf = (th, tester) =>
+      th.home?.hostIsTester && th.home.host === tester ? `<span class="tag amber" title="Members see this host as ${esc(th.home.hostCode)}">Host · ${esc(th.home.hostCode)}</span>` : "team" === th.kind ? `<span class="tag">Team chat</span>` : `<span class="tag">Roommate chat</span>`;
+    const testerLine = (th) => th.testers.map((m) => `<span class="row" style="gap:6px;align-items:center">${face(th.people[m], 22)}<span class="tag blue">Test · ${nameOf(th.people[m], m)}</span>${roleOf(th, m)}</span>`).join("");
+    const membersText = (th) => th.others.map((m) => nameOf(th.people[m], m)).join(", ") || "Test accounts only";
+    const waiting = (th) => th.applications?.some((a) => "pending" === a.status);
+    let threads = [];
+    function drawFilters() {
+      const counts = { all: threads.length, unread: threads.filter((th) => th.unread > 0).length, apps: threads.filter(waiting).length };
+      $("#x-filters").innerHTML = [["all", "All"], ["unread", "Waiting for a reply"], ["apps", "Applications to decide"]].map(([k, l]) => `<button class="chip ${k === samplesFilter ? "on" : ""}" data-f="${k}">${l} <b>${counts[k]}</b></button>`).join("");
+      $("#x-filters").querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { samplesFilter = b.dataset.f; drawFilters(); drawList(); }));
+    }
+    function drawList() {
+      const shown = threads.filter((th) => ("unread" === samplesFilter ? th.unread > 0 : "apps" === samplesFilter ? waiting(th) : true));
+      $("#x-list").innerHTML = shown.length
+        ? shown.map((th) => `<div class="thread ${th.id === samplesOpen ? "on" : ""}" data-th="${esc(th.id)}" style="grid-template-columns:1fr auto;gap:6px">
+            <div style="display:grid;gap:6px;min-width:0">${testerLine(th)}
+              <div class="row" style="gap:6px;align-items:center;min-width:0">${th.others[0] ? face(th.people[th.others[0]], 22) : ""}<b style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${membersText(th)}</b></div>
+              ${th.home ? `<span class="hint" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🏠 ${esc(th.home.title || "(home)")}</span>` : th.title ? `<span class="hint">${esc(th.title)}</span>` : ""}
+              <span class="sub" style="grid-column:auto">${esc(th.last?.text || "")}</span>
+              ${th.applications?.length ? `<div class="tags">${th.applications.map(appTag).join("")}</div>` : ""}
+            </div>
+            <div style="display:grid;justify-items:end;align-content:start;gap:6px"><span class="hint">${ago(th.lastAt)}</span>${th.unread ? `<span class="count">${th.unread}</span>` : ""}</div>
+          </div>`).join("")
+        : `<div class="empty">${"apps" === samplesFilter ? "No applications waiting." : "unread" === samplesFilter ? "Nothing waiting for a reply." : "No one has written to a test account yet."}</div>`;
+      $("#x-list").querySelectorAll("[data-th]").forEach((d) => (d.onclick = () => { samplesOpen = d.dataset.th; drawList(); loadConv(); }));
+    }
     async function loadList() {
       let r;
       try { r = await api("GET", "/api/admin/samples?filter=all"); } catch (e) { $("#x-list").innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
-      const threads = r.threads || [];
-      samplesUnread = r.unread ?? samplesUnread;
+      threads = r.threads || [];
+      samplesUnread = (r.unread ?? 0) + (r.pendingApplications ?? 0);
       renderNav();
-      $("#x-list").innerHTML = threads.length
-        ? threads.map((th) => `<div class="thread ${th.id === samplesOpen ? "on" : ""}" data-th="${esc(th.id)}"><b>${label(th)}</b><span>${th.unread ? `<span class="count">${th.unread}</span> ` : ""}${th.title ? `${esc(th.title)} · ` : ""}${esc(th.last?.text || "")}</span><span class="hint">${ago(th.lastAt)}</span></div>`).join("")
-        : `<div class="empty">No one has written to a sample account yet.</div>`;
-      $("#x-list").querySelectorAll("[data-th]").forEach((d) => (d.onclick = () => { samplesOpen = d.dataset.th; loadList(); loadConv(); }));
+      drawFilters();
+      drawList();
+    }
+    const when = (ms) => (ms ? new Date(ms).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" }) : "");
+    function appCard(th, a) {
+      const who = a.members.map((m) => nameOf(th.people[m], m)).join(", ") || nameOf(th.people[a.applicant], a.applicant);
+      const open = ["pending", "viewing", "accepted"].includes(a.status);
+      return `<div class="card" style="padding:12px 14px;display:grid;gap:8px;border:1px solid var(--line)" data-app="${esc(a.id)}">
+        <div class="row" style="justify-content:space-between;align-items:center"><b>${a.team ? "Team application" : "Application"} · ${who}</b>${appTag(a)}</div>
+        <span class="hint">${esc(th.home?.title || "")}${a.room ? ` · room ${esc(a.room)}` : ""} · sent ${ago(a.at)}${a.viewingAt ? ` · viewing ${esc(when(a.viewingAt))}` : ""}</span>
+        ${a.note ? `<div class="msg" style="max-width:100%">${esc(a.note)}</div>` : ""}
+        ${open ? `<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+          ${"accepted" !== a.status ? `<button class="btn small primary" data-do="accepted">Accept</button>` : ""}
+          <input class="input sm" type="datetime-local" data-at style="width:auto"><button class="btn small" data-do="viewing">${"viewing" === a.status ? "Change viewing" : "Invite to a viewing"}</button>
+          <button class="btn small danger" data-do="rejected">Decline</button>
+          <span class="hint">as ${nameOf(th.people[th.home?.host], th.home?.host)} (${esc(th.home?.hostCode || "")})</span></div>` : ""}
+      </div>`;
     }
     async function loadConv(keepDraft) {
       if (!samplesOpen) return;
@@ -2247,9 +2291,19 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
       const th = c.thread || {};
       const msgs = c.messages || [];
       const testers = th.testers || [];
-      $("#x-conv").innerHTML = `<div><h3 style="margin:0">${label(th)}</h3><span class="hint">${th.title ? `${esc(th.title)} · ` : ""}${plural(msgs.length, "message")}${"active" !== th.status ? " · chat request (answering accepts it)" : ""}</span></div>
-        <div class="msgs" id="x-msgs">${msgs.map((m) => `<div class="msg ${testers.includes(m.from) ? "me" : "system" === m.from || "system" === m.kind ? "system" : ""} ${m.deleted ? "deleted" : ""}"><span class="body">${testers.includes(m.from) ? `<b>${nameOf(th.people[m.from], m.from)}:</b> ` : ""}${esc("text" === (m.kind || "text") ? m.text : `[${m.kind}] ${m.text || ""}`)}</span><span class="hint">${ago(m.at)}</span></div>`).join("")}</div>
-        <form class="reply" id="x-reply">${testers.length > 1 ? `<select class="input sm" id="x-as">${testers.map((m) => `<option value="${esc(m)}">Answer as ${nameOf(th.people[m], m)}</option>`).join("")}</select>` : ""}<textarea class="input" id="x-text" rows="2" placeholder="Reply as ${testers[0] ? nameOf(th.people[testers[0]], testers[0]) : "the sample account"}" maxlength="4000"></textarea><button class="btn primary">Send</button></form>`;
+      const mine = (m) => testers.includes(m.from);
+      const bubble = (m) => {
+        const who = "system" === m.from ? "" : `<b>${mine(m) ? `As ${nameOf(th.people[m.from], m.from)}` : nameOf(th.people[m.from], m.from)}:</b> `;
+        const body = "application" === m.kind ? `<span class="tag red" style="margin-right:6px">Application</span>${esc(m.text || "")}` : "text" === (m.kind || "text") ? esc(m.text) : `<span class="tag" style="margin-right:6px">${esc(m.kind)}</span>${esc(m.text || "")}`;
+        return `<div class="msg ${mine(m) ? "me" : "system" === m.from || "system" === m.kind ? "system" : ""} ${m.deleted ? "deleted" : ""}"><span class="body">${who}${body}</span><small>${ago(m.at)}</small></div>`;
+      };
+      $("#x-conv").innerHTML = `<div style="display:grid;gap:8px">
+          <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap">${testerLine(th)}<span class="hint">with</span>${th.others[0] ? face(th.people[th.others[0]], 26) : ""}<b>${membersText(th)}</b></div>
+          <span class="hint">${th.home ? `🏠 ${esc(th.home.title || "")} · ` : th.title ? `${esc(th.title)} · ` : ""}${plural(msgs.length, "message")}${"active" !== th.status ? " · chat request: answering accepts it" : ""}</span>
+          ${(th.applications || []).map((a) => appCard(th, a)).join("")}
+        </div>
+        <div class="msgs" id="x-msgs">${msgs.map(bubble).join("")}</div>
+        <form class="reply" id="x-reply">${testers.length > 1 ? `<select class="input sm" id="x-as">${testers.map((m) => `<option value="${esc(m)}">Answer as ${nameOf(th.people[m], m)}</option>`).join("")}</select>` : ""}<textarea class="input" id="x-text" rows="2" placeholder="Reply as ${testers[0] ? nameOf(th.people[testers[0]], testers[0]) : "the test account"}${th.home?.hostIsTester && th.home.host === testers[0] ? ` (shown as ${esc(th.home.hostCode)})` : ""}" maxlength="4000"></textarea><button class="btn primary">Send</button></form>`;
       const box = $("#x-msgs");
       box.scrollTop = box.scrollHeight;
       if (draft) $("#x-text").value = draft;
@@ -2262,6 +2316,18 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
         btn.disabled = true;
         try { await api("POST", `/api/admin/samples/${enc(samplesOpen)}/send`, { as: $("#x-as")?.value || testers[0], text }); $("#x-text").value = ""; await loadConv(); loadList(); } catch (er) { toast(er.message); } finally { btn.disabled = false; }
       };
+      $("#x-conv").querySelectorAll("[data-app]").forEach((card) => card.querySelectorAll("[data-do]").forEach((b) => (b.onclick = async () => {
+        const status = b.dataset.do;
+        const at = card.querySelector("[data-at]")?.value;
+        if ("rejected" === status && !(await dialog({ title: "Decline this application?", body: `<p class="hint">The applicant is told "Not this time".</p>`, confirm: "Decline", danger: true }))) return;
+        b.disabled = true;
+        try {
+          await api("POST", `/api/admin/samples/${enc(samplesOpen)}/application`, { applicationId: card.dataset.app, status, viewingAt: "viewing" === status && at ? new Date(at).getTime() : null });
+          toast({ accepted: "Accepted", viewing: "Viewing sent", rejected: "Declined" }[status]);
+          await loadConv(true);
+          loadList();
+        } catch (er) { toast(er.message); b.disabled = false; }
+      })));
     }
     await loadList();
     if (samplesOpen) await loadConv();
@@ -2269,7 +2335,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
       if ("samples" !== view || !$("#x-list")) return clearInterval(samplesTimer);
       if ("visible" !== document.visibilityState) return;
       loadList();
-      if (samplesOpen && !$("#x-text")?.matches(":focus")) loadConv(true);
+      if (samplesOpen && !$("#x-text")?.matches(":focus") && !document.activeElement?.matches?.("[data-at]")) loadConv(true);
     }, 10000);
   };
 
