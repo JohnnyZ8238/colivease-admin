@@ -2234,7 +2234,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
     const appTag = (a) => `<span class="tag ${APP_TAG[a.status]?.[0] ?? ""}">${APP_TAG[a.status]?.[1] ?? esc(a.status)}</span>`;
     // Which test account, and in what role: the host of a home (members see its code), or a person they chat with.
     const roleOf = (th, tester) =>
-      th.home?.hostIsTester && th.home.host === tester ? `<span class="tag amber" title="Members see this host as ${esc(th.home.hostCode)}">Host · ${esc(th.home.hostCode)}</span>` : "team" === th.kind ? `<span class="tag">Team chat</span>` : `<span class="tag">Roommate chat</span>`;
+      th.home?.hostIsTester && th.home.host === tester ? `<span class="tag amber" title="Members see this host as ${esc(th.home.hostAlias)}">Host · ${esc(th.home.hostAlias)}</span>` : "team" === th.kind ? `<span class="tag">Team chat</span>` : `<span class="tag">Roommate chat</span>`;
     const testerLine = (th) => th.testers.map((m) => `<span class="row" style="gap:6px;align-items:center">${face(th.people[m], 22)}<span class="tag blue">Test · ${nameOf(th.people[m], m)}</span>${roleOf(th, m)}</span>`).join("");
     const membersText = (th) => th.others.map((m) => nameOf(th.people[m], m)).join(", ") || "Test accounts only";
     const waiting = (th) => th.applications?.some((a) => "pending" === a.status);
@@ -2280,7 +2280,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
           ${"accepted" !== a.status ? `<button class="btn small primary" data-do="accepted">Accept</button>` : ""}
           <input class="input sm" type="datetime-local" data-at style="width:auto"><button class="btn small" data-do="viewing">${"viewing" === a.status ? "Change viewing" : "Invite to a viewing"}</button>
           <button class="btn small danger" data-do="rejected">Decline</button>
-          <span class="hint">as ${nameOf(th.people[th.home?.host], th.home?.host)} (${esc(th.home?.hostCode || "")})</span></div>` : ""}
+          <span class="hint">as ${nameOf(th.people[th.home?.host], th.home?.host)} (${esc(th.home?.hostAlias || "")})</span></div>` : ""}
       </div>`;
     }
     async function loadConv(keepDraft) {
@@ -2303,7 +2303,7 @@ td.sel input, th.sel input { width: 17px; height: 17px; accent-color: var(--blue
           ${(th.applications || []).map((a) => appCard(th, a)).join("")}
         </div>
         <div class="msgs" id="x-msgs">${msgs.map(bubble).join("")}</div>
-        <form class="reply" id="x-reply">${testers.length > 1 ? `<select class="input sm" id="x-as">${testers.map((m) => `<option value="${esc(m)}">Answer as ${nameOf(th.people[m], m)}</option>`).join("")}</select>` : ""}<textarea class="input" id="x-text" rows="2" placeholder="Reply as ${testers[0] ? nameOf(th.people[testers[0]], testers[0]) : "the test account"}${th.home?.hostIsTester && th.home.host === testers[0] ? ` (shown as ${esc(th.home.hostCode)})` : ""}" maxlength="4000"></textarea><button class="btn primary">Send</button></form>`;
+        <form class="reply" id="x-reply">${testers.length > 1 ? `<select class="input sm" id="x-as">${testers.map((m) => `<option value="${esc(m)}">Answer as ${nameOf(th.people[m], m)}</option>`).join("")}</select>` : ""}<textarea class="input" id="x-text" rows="2" placeholder="Reply as ${testers[0] ? nameOf(th.people[testers[0]], testers[0]) : "the test account"}${th.home?.hostIsTester && th.home.host === testers[0] ? ` (shown as ${esc(th.home.hostAlias)})` : ""}" maxlength="4000"></textarea><button class="btn primary">Send</button></form>`;
       const box = $("#x-msgs");
       box.scrollTop = box.scrollHeight;
       if (draft) $("#x-text").value = draft;
